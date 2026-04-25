@@ -19,7 +19,7 @@ You will need [Node.js](https://nodejs.org/) installed on your computer.
 1. Clone this repository:
    ```bash
    git clone https://github.com/markuskahl/flxanimator.git
-   
+
    cd flxanimator
    ```
 
@@ -49,4 +49,4 @@ You will need [Node.js](https://nodejs.org/) installed on your computer.
 - Vanilla JavaScript
 
 ## License
-Refer to the `LICENSE` file for more details.
+Read the `LICENSE` file for more details.
