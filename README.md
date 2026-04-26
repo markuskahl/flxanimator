@@ -10,7 +10,7 @@
 - **Live Preview:** Watch your animation play in real-time as you pick frames. You can also pan and zoom in the preview window!
 - **Workspace Navigation:** Intuitive pan and zoom across your entire spritesheet using the mouse wheel and click-and-drag.
 - **Animation Controls:** Create multiple animations (e.g., `idle`, `run`, `jump`) per project, set custom FPS, and toggle looping.
-- **HaxeFlixel Export:** Automatically generate a `.hx` class that extends `FlxAnimationController` containing all your animation definitions. No more manual frame array typing!
+- **HaxeFlixel Export:** Automatically generate a `.hx` class that extends `FlxAnimationController` containing all your animation definitions. **No more manual frame array typing!**
 
 ## Installation
 
