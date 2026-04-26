@@ -33,6 +33,16 @@ You will need [Node.js](https://nodejs.org/) installed on your computer.
    npm start
    ```
 
+## Building
+
+To create a standalone Windows executable (.exe), run the following command:
+
+```bash
+npm run build
+```
+
+The compiled application will be located in the `dist` folder.
+
 ## Usage Guide
 
 1. Click **New Project** and browse for your spritesheet image.
