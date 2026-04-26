@@ -2,6 +2,8 @@
 
 **FlxAnimator** is a lightweight desktop tool built with Electron. It allows you to create spritesheet animations visually and export them directly into ready-to-use HaxeFlixel classes.
 
+![FlxAnimator Screenshot](Screenshot-FlxAnimator.png)
+
 ## Features
 
 - **Project Management:** Create, save, and load your animation projects (`.json`).
