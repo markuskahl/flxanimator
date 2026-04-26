@@ -22,7 +22,7 @@ let currentFilePath = null;
 let isDirty = false;
 
 function updateTitle() {
-    const baseTitle = "HaxeFlixel Animation Studio";
+    const baseTitle = "FlxAnimator";
     let filename = "Untitled";
     
     if (currentFilePath) {
