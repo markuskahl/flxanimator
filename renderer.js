@@ -77,6 +77,91 @@ const previewScroll = document.getElementById('preview-scroll');
 const previewTransformContainer = document.getElementById('preview-transform-container');
 const statusBar = document.getElementById('status-bar');
 
+const startScreen = document.getElementById('start-screen');
+const workspaceLeft = document.getElementById('workspace-left');
+const btnStartNewProject = document.getElementById('btn-start-new-project');
+const btnStartOpenProject = document.getElementById('btn-start-open-project');
+const recentProjectsList = document.getElementById('recent-projects-list');
+const appHeader = document.getElementById('app-header');
+const sidebar = document.getElementById('sidebar');
+
+function showWorkspace() {
+    startScreen.style.display = 'none';
+    workspaceLeft.style.display = 'block';
+    workspaceRight.style.display = 'block';
+    resizer.style.display = 'block';
+    if (appHeader) appHeader.style.display = 'flex';
+    if (sidebar) sidebar.style.display = 'flex';
+}
+
+async function updateRecentProjectsList() {
+    if (!recentProjectsList) return;
+    const projects = await window.api.getRecentProjects();
+    recentProjectsList.innerHTML = '';
+    
+    if (projects.length === 0) {
+        recentProjectsList.innerHTML = '<li class="empty-recent" style="padding: 1rem; color: var(--text-muted); text-align: center;">No recent projects</li>';
+        return;
+    }
+    
+    projects.forEach(projPath => {
+        const li = document.createElement('li');
+        li.className = 'recent-item';
+        li.style.cssText = 'background: rgba(255, 255, 255, 0.05); padding: 0.8rem 1rem; margin-bottom: 0.5rem; border-radius: 6px; cursor: pointer; border: 1px solid transparent; display: flex; flex-direction: column; gap: 0.2rem; transition: all 0.2s ease;';
+        
+        li.onmouseover = () => {
+            li.style.background = 'rgba(255, 255, 255, 0.1)';
+            li.style.borderColor = 'var(--accent-color)';
+        };
+        li.onmouseout = () => {
+            li.style.background = 'rgba(255, 255, 255, 0.05)';
+            li.style.borderColor = 'transparent';
+        };
+        
+        const filename = projPath.split('\\').pop().split('/').pop();
+        const nameSpan = document.createElement('strong');
+        nameSpan.innerText = filename;
+        nameSpan.style.color = '#fff';
+        
+        const pathSpan = document.createElement('span');
+        pathSpan.className = 'recent-path';
+        pathSpan.innerText = projPath;
+        pathSpan.style.fontSize = '0.8rem';
+        pathSpan.style.color = 'var(--text-muted)';
+        
+        li.appendChild(nameSpan);
+        li.appendChild(pathSpan);
+        
+        li.addEventListener('click', async () => {
+            const response = await window.api.openRecentProject(projPath);
+            if (response && response.data) {
+                if (!validateProjectSchema(response.data)) {
+                    showStatus('Invalid project file format.', 'error');
+                    return;
+                }
+                project = response.data;
+                currentFilePath = response.filePath;
+                await loadSpritesheet();
+                selectedAnimationIndex = -1;
+                updateAnimationList();
+                drawGrid();
+                startPreview();
+                clearDirty();
+                showWorkspace();
+                showStatus('Project loaded.', 'success');
+                updateRecentProjectsList();
+            } else {
+                showStatus('Failed to load project.', 'error');
+                updateRecentProjectsList();
+            }
+        });
+        
+        recentProjectsList.appendChild(li);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', updateRecentProjectsList);
+
 // --- Status Bar ---
 let statusTimeout = null;
 function showStatus(message, type = 'info') {
@@ -195,6 +280,13 @@ btnNewProject.addEventListener('click', () => {
     modalNewProject.classList.add('active');
 });
 
+if (btnStartNewProject) {
+    btnStartNewProject.addEventListener('click', () => {
+        showWarning('new-project-warning', '');
+        modalNewProject.classList.add('active');
+    });
+}
+
 // Neues Projekt Modal schließen
 document.getElementById('btn-cancel-new').addEventListener('click', () => {
     modalNewProject.classList.remove('active');
@@ -232,8 +324,10 @@ document.getElementById('btn-create-new').addEventListener('click', async () => 
     await loadSpritesheet();
     modalNewProject.classList.remove('active');
     updateAnimationList();
+    showWorkspace();
     markDirty();
     showStatus('New project created.', 'success');
+    updateRecentProjectsList();
 });
 
 // Lädt das Bild via Base64 (sicherer als lokale Dateipfade im Browser)
@@ -628,7 +722,7 @@ function validateProjectSchema(data) {
     return true;
 }
 
-btnOpenProject.addEventListener('click', async () => {
+async function openProjectHandler() {
     // IPC Call
     const response = await window.api.openProject();
     if (response && response.data) {
@@ -644,9 +738,16 @@ btnOpenProject.addEventListener('click', async () => {
         drawGrid();
         startPreview();
         clearDirty();
+        showWorkspace();
         showStatus('Project loaded.', 'success');
+        updateRecentProjectsList();
     }
-});
+}
+
+btnOpenProject.addEventListener('click', openProjectHandler);
+if (btnStartOpenProject) {
+    btnStartOpenProject.addEventListener('click', openProjectHandler);
+}
 
 // --- Haxe Code Export ---
 

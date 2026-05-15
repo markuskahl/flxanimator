@@ -5,6 +5,51 @@ const fs = require('fs/promises');
 // Force dark theme so the window background and titlebar don't flash white
 nativeTheme.themeSource = 'dark';
 
+const userDataPath = app.getPath('userData');
+const recentProjectsPath = path.join(userDataPath, 'recent-projects.json');
+
+async function getRecentProjects() {
+    try {
+        const data = await fs.readFile(recentProjectsPath, 'utf-8');
+        let projects = JSON.parse(data);
+        
+        let validProjects = [];
+        let changed = false;
+        for (const proj of projects) {
+            try {
+                await fs.access(proj);
+                validProjects.push(proj);
+            } catch (err) {
+                changed = true;
+            }
+        }
+        
+        if (changed) {
+            await fs.writeFile(recentProjectsPath, JSON.stringify(validProjects, null, 2), 'utf-8');
+        }
+        
+        return validProjects;
+    } catch (e) {
+        return [];
+    }
+}
+
+async function addRecentProject(filePath) {
+    let projects = await getRecentProjects();
+    projects = projects.filter(p => p !== filePath);
+    projects.unshift(filePath);
+    
+    if (projects.length > 10) {
+        projects = projects.slice(0, 10);
+    }
+    
+    try {
+        await fs.writeFile(recentProjectsPath, JSON.stringify(projects, null, 2), 'utf-8');
+    } catch (e) {
+        console.error("Failed to save recent projects:", e);
+    }
+}
+
 function createWindow() {
     const win = new BrowserWindow({
         width: 1280,
@@ -104,6 +149,7 @@ ipcMain.handle('save-project', async (event, projectData, existingPath) => {
     
     try {
         await fs.writeFile(filePath, JSON.stringify(projectData, null, 2), 'utf-8');
+        await addRecentProject(filePath);
         return filePath;
     } catch (error) {
         console.error("Fehler beim Speichern:", error);
@@ -122,6 +168,7 @@ ipcMain.handle('open-project', async () => {
         const filePath = filePaths[0];
         try {
             const data = await fs.readFile(filePath, 'utf-8');
+            await addRecentProject(filePath);
             return { data: JSON.parse(data), filePath };
         } catch (error) {
             console.error("Fehler beim Öffnen:", error);
@@ -129,6 +176,22 @@ ipcMain.handle('open-project', async () => {
         }
     }
     return null;
+});
+
+// 4b. Recent Projects
+ipcMain.handle('get-recent-projects', async () => {
+    return await getRecentProjects();
+});
+
+ipcMain.handle('open-recent-project', async (event, filePath) => {
+    try {
+        const data = await fs.readFile(filePath, 'utf-8');
+        await addRecentProject(filePath);
+        return { data: JSON.parse(data), filePath };
+    } catch (error) {
+        console.error("Fehler beim Öffnen des Recent Projects:", error);
+        return null;
+    }
 });
 
 // 5. Haxe Klasse exportieren (.hx)

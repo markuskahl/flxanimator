@@ -15,7 +15,7 @@
 </head>
 
 <body>
-    <header class="app-header glass">
+    <header id="app-header" class="app-header glass" style="display: none;">
         <div class="logo">FlxAnimator</div>
         <div class="header-actions">
             <button id="btn-new-project">New Project</button>
@@ -43,7 +43,7 @@
     </header>
 
     <main class="app-main">
-        <aside class="sidebar glass-panel">
+        <aside id="sidebar" class="sidebar glass-panel" style="display: none;">
             <section class="panel">
                 <button id="btn-add-anim" class="secondary" style="width: 100%; margin-bottom: 10px;">Add
                     Animation</button>
@@ -63,7 +63,24 @@
         </aside>
 
         <section class="workspace">
-            <div id="workspace-left" class="workspace-pane">
+            <div id="start-screen" class="start-screen glass-panel">
+                <div class="start-content">
+                    <h1>FlxAnimator</h1>
+                    <p>Create a new project or open an existing one.</p>
+                    <div class="start-actions">
+                        <button id="btn-start-new-project" class="primary pulse">New Project</button>
+                        <button id="btn-start-open-project">Open Project</button>
+                    </div>
+                    <div class="recent-projects-container">
+                        <h3>Recent Projects</h3>
+                        <ul id="recent-projects-list" class="recent-list scrollable">
+                            <!-- Filled by JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="workspace-left" class="workspace-pane" style="display: none;">
                 <div class="workspace-scroll" id="workspace-scroll">
                     <div class="grid-container glass-panel" id="grid-container">
                         <img id="spritesheet-img" style="display:none;" alt="Spritesheet" />
@@ -72,9 +89,9 @@
                 </div>
             </div>
 
-            <div id="workspace-resizer" class="resizer"></div>
+            <div id="workspace-resizer" class="resizer" style="display: none;"></div>
 
-            <div id="workspace-right" class="workspace-pane">
+            <div id="workspace-right" class="workspace-pane" style="display: none;">
                 <div class="workspace-scroll" id="preview-scroll">
                     <div class="preview-transform-container" id="preview-transform-container">
                         <canvas id="preview-canvas"></canvas>
