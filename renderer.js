@@ -410,39 +410,7 @@ function drawGrid() {
             // Basis-Raster zeichnen
             ctxGrid.strokeRect(x, y, width, height);
 
-            // Wenn eine Animation selektiert ist, hebe ihre Frames hervor
-            if (selectedAnimationIndex >= 0) {
-                const anim = project.animations[selectedAnimationIndex];
-                const frameIndex = row * cols + col;
 
-                const frameOrder = anim.frames.indexOf(frameIndex);
-                if (frameOrder !== -1) {
-                    // Frame gehört zur ausgewählten Animation
-                    ctxGrid.fillStyle = 'rgba(0, 230, 118, 0.4)'; // Akzentfarbe transparent
-                    ctxGrid.fillRect(x, y, width, height);
-
-                    // Schriftgröße bleibt scharf und proportional zur Zoomstufe
-                    const maxFontSize = height * 0.8;
-                    const fontSize = Math.min(Math.max(12 / zoom, 2), maxFontSize);
-                    ctxGrid.font = `bold ${fontSize}px Inter`;
-
-                    const textStr = (frameOrder + 1).toString();
-                    const textWidth = ctxGrid.measureText(textStr).width;
-                    const radius = Math.max(textWidth, fontSize) / 2 + (4 / zoom);
-
-                    // Schwarzer Kreis als Hintergrund
-                    ctxGrid.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                    ctxGrid.beginPath();
-                    ctxGrid.arc(x + width / 2, y + height / 2, radius, 0, Math.PI * 2);
-                    ctxGrid.fill();
-
-                    // Text
-                    ctxGrid.fillStyle = '#ffffff';
-                    ctxGrid.textAlign = 'center';
-                    ctxGrid.textBaseline = 'middle';
-                    ctxGrid.fillText(textStr, x + width / 2, y + height / 2);
-                }
-            }
         }
     }
 }
@@ -771,7 +739,7 @@ function updateTimeline() {
         const frameEl = document.createElement('div');
         frameEl.className = 'timeline-frame glass-panel';
         frameEl.style.cssText = `
-            width: 80px; height: 80px; min-width: 80px;
+            width: 120px; height: 120px; min-width: 120px;
             position: relative; cursor: grab;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             border: 2px solid transparent; transition: border-color 0.2s;
@@ -794,7 +762,7 @@ function updateTimeline() {
             const sy = margin + row * (height + spacing);
 
             // Calculate scale to fit within the 80x80 container while preserving aspect ratio
-            const scale = Math.min(60 / width, 60 / height);
+            const scale = Math.min(90 / width, 90 / height);
             const scaledWidth = width * scale;
             const scaledHeight = height * scale;
 
@@ -810,7 +778,7 @@ function updateTimeline() {
 
         const idxLabel = document.createElement('div');
         idxLabel.innerText = idx + 1;
-        idxLabel.style.cssText = 'position: absolute; top: -8px; left: -8px; background: var(--accent-color); color: #000; font-weight: bold; font-size: 0.7rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;';
+        idxLabel.style.cssText = 'position: absolute; bottom: 4px; left: 4px; background: rgba(0, 0, 0, 0.8); color: #fff; font-weight: bold; font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,0.5); z-index: 10;';
         frameEl.appendChild(idxLabel);
 
         const actionsEl = document.createElement('div');
