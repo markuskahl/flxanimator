@@ -55,6 +55,12 @@
                         <label class="checkbox-label">
                             <input type="checkbox" id="anim-loop" checked> Loop
                         </label>
+                        <label class="checkbox-label" style="margin-left: 10px;">
+                            <input type="checkbox" id="anim-flip-x"> FlipX
+                        </label>
+                        <label class="checkbox-label" style="margin-left: 10px;">
+                            <input type="checkbox" id="anim-flip-y"> FlipY
+                        </label>
                     </div>
                 </div>
                 <ul id="animation-list" class="scrollable"></ul>
@@ -196,9 +202,17 @@
                     <input type="number" id="new-anim-fps" value="15" min="1">
                 </div>
                 <div class="form-group" style="justify-content: flex-end;">
-                    <label class="checkbox-label" style="margin-bottom: 0.8rem;">
-                        <input type="checkbox" id="new-anim-loop" checked> Loop
-                    </label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="new-anim-loop" checked> Loop
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="new-anim-flip-x"> FlipX
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="new-anim-flip-y"> FlipY
+                        </label>
+                    </div>
                 </div>
             </div>
             <div id="new-anim-warning" class="form-warning"></div>

@@ -55,6 +55,8 @@ const editAnimControls = document.getElementById('edit-anim-controls');
 const editAnimName = document.getElementById('anim-name');
 const editAnimFps = document.getElementById('anim-fps');
 const editAnimLoop = document.getElementById('anim-loop');
+const editAnimFlipX = document.getElementById('anim-flip-x');
+const editAnimFlipY = document.getElementById('anim-flip-y');
 
 const btnNewProject = document.getElementById('btn-new-project');
 const btnOpenProject = document.getElementById('btn-open-project');
@@ -614,6 +616,8 @@ document.getElementById('btn-confirm-new-anim').addEventListener('click', () => 
     const nameInput = document.getElementById('new-anim-name');
     const fpsInput = document.getElementById('new-anim-fps');
     const loopInput = document.getElementById('new-anim-loop');
+    const flipXInput = document.getElementById('new-anim-flip-x');
+    const flipYInput = document.getElementById('new-anim-flip-y');
 
     const name = nameInput.value.trim();
     if (!name) {
@@ -626,12 +630,16 @@ document.getElementById('btn-confirm-new-anim').addEventListener('click', () => 
         name,
         fps: parseInt(fpsInput.value) || 15,
         loop: loopInput.checked,
+        flipX: flipXInput ? flipXInput.checked : false,
+        flipY: flipYInput ? flipYInput.checked : false,
         frames: []
     });
 
     nameInput.value = '';
     fpsInput.value = '15';
     loopInput.checked = true;
+    if (flipXInput) flipXInput.checked = false;
+    if (flipYInput) flipYInput.checked = false;
 
     modalNewAnim.classList.remove('active');
 
@@ -672,6 +680,20 @@ editAnimLoop.addEventListener('change', (e) => {
         markDirty();
     }
 });
+editAnimFlipX.addEventListener('change', (e) => {
+    if (selectedAnimationIndex >= 0) {
+        project.animations[selectedAnimationIndex].flipX = e.target.checked;
+        startPreview();
+        markDirty();
+    }
+});
+editAnimFlipY.addEventListener('change', (e) => {
+    if (selectedAnimationIndex >= 0) {
+        project.animations[selectedAnimationIndex].flipY = e.target.checked;
+        startPreview();
+        markDirty();
+    }
+});
 
 function updateEditControls() {
     if (selectedAnimationIndex >= 0 && selectedAnimationIndex < project.animations.length) {
@@ -680,6 +702,8 @@ function updateEditControls() {
         editAnimName.value = anim.name;
         editAnimFps.value = anim.fps;
         editAnimLoop.checked = anim.loop;
+        editAnimFlipX.checked = !!anim.flipX;
+        editAnimFlipY.checked = !!anim.flipY;
     } else {
         editAnimControls.style.display = 'none';
     }
@@ -912,7 +936,16 @@ function startPreview() {
         ctxPreview.imageSmoothingEnabled = false; // Knackige Pixel-Art erhalten
 
         // Schneide das Segment aus dem Originalbild aus und zeichne es
+        ctxPreview.save();
+        let translateX = anim.flipX ? width : 0;
+        let translateY = anim.flipY ? height : 0;
+        let scaleX = anim.flipX ? -1 : 1;
+        let scaleY = anim.flipY ? -1 : 1;
+        
+        ctxPreview.translate(translateX, translateY);
+        ctxPreview.scale(scaleX, scaleY);
         ctxPreview.drawImage(imgSpritesheet, sx, sy, width, height, 0, 0, width, height);
+        ctxPreview.restore();
 
         currentPreviewFrame++;
         if (currentPreviewFrame >= anim.frames.length) {
@@ -1053,8 +1086,8 @@ async function performHaxeExport(className, existingPath, packageName = '') {
     project.animations.forEach(anim => {
         const framesStr = `[${anim.frames.join(', ')}]`;
         // Da wir direkt innerhalb von FlxAnimationController sind, rufen wir this.add() auf.
-        // HaxeFlixel Syntax: add(Name, [FrameArray], Framerate, Looped)
-        haxeCode += `\t\tthis.add("${anim.name}", ${framesStr}, ${anim.fps}, ${anim.loop});\n`;
+        // HaxeFlixel Syntax: add(Name, [FrameArray], Framerate, Looped, FlipX, FlipY)
+        haxeCode += `\t\tthis.add("${anim.name}", ${framesStr}, ${anim.fps}, ${anim.loop}, ${!!anim.flipX}, ${!!anim.flipY});\n`;
     });
 
     haxeCode += `\t}\n}\n`;
