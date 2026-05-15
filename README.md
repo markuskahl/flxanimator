@@ -7,12 +7,14 @@
 ## Features
 
 - **Project Management:** Create, save, and load your animation projects (`.json`).
+- **Recent Projects:** Quickly resume your work from a list of recently opened projects on the start screen.
 - **Spritesheet Configuration:** Easily configure frame width, height, spacing, and margin for your spritesheets.
-- **Interactive Grid Selection:** Click on frames in the workspace grid to add them to your animation sequence. Frames are numbered so you can clearly see the order.
+- **Timeline Editor:** Manage your animation frames with a fully featured timeline. Supports drag-and-drop from the spritesheet, duplication, and deletion of frames.
 - **Live Preview:** Watch your animation play in real-time as you pick frames. You can also pan and zoom in the preview window!
 - **Workspace Navigation:** Intuitive pan and zoom across your entire spritesheet using the mouse wheel and click-and-drag.
 - **Animation Controls:** Create multiple animations (e.g., `idle`, `run`, `jump`) per project, set custom FPS, and toggle looping.
-- **HaxeFlixel Export:** Automatically generate a `.hx` class that extends `FlxAnimationController` containing all your animation definitions. **No more manual frame array typing!**
+- **HaxeFlixel Export:** Automatically generate a `.hx` class that extends `FlxAnimationController` containing all your animation definitions. Specify custom package names for your generated Haxe source files.
+- **Clean UI:** A streamlined, distraction-free interface that hides unnecessary elements when not in use.
 
 ## Installation
 
@@ -47,12 +49,12 @@ The compiled application will be located in the `dist` folder.
 
 ## Usage Guide
 
-1. Click **New Project** and browse for your spritesheet image.
-2. Define the **Frame Width** and **Frame Height** matching your spritesheet.
+1. On the start screen, click **New** and browse for your spritesheet image, or quickly open a **Recent Project**.
+2. Define the **Frame Width**, **Frame Height**, **Spacing**, and **Margin** matching your spritesheet.
 3. Click **Add Animation** in the sidebar to create a new state (e.g., "walk").
-4. In the center workspace, click on the frames in the exact order you want them to play.
+4. Manage your frames using the timeline panel below the workspace. You can click on the grid to add frames, or drag-and-drop frames from the grid directly onto the timeline.
 5. Check the live preview on the right side. You can adjust the FPS and Loop settings in the sidebar on the fly.
-6. Click **Export** in the top right corner, specify a Class Name, and save your generated Haxe class directly into your game's source folder.
+6. Click **Export** in the top right corner, specify a **Package** and **Class Name**, and save your generated Haxe class directly into your game's source folder.
 
 ## HaxeFlixel Example
 
