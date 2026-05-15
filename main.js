@@ -2,6 +2,12 @@ const { app, BrowserWindow, ipcMain, dialog, nativeTheme } = require('electron')
 const path = require('path');
 const fs = require('fs/promises');
 
+// Deaktiviere Hardwarebeschleunigung, um 'GPU state invalid' Abstürze in Chromium zu verhindern
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-gpu-compositing');
+app.commandLine.appendSwitch('log-level', '3'); // Unterdrückt nervige Chromium-Fehlermeldungen im Terminal
+
 // Force dark theme so the window background and titlebar don't flash white
 nativeTheme.themeSource = 'dark';
 

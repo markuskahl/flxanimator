@@ -24,11 +24,11 @@ let isDirty = false;
 function updateTitle() {
     const baseTitle = "FlxAnimator";
     let filename = "Untitled";
-    
+
     if (currentFilePath) {
         filename = currentFilePath.split('\\').pop().split('/').pop();
     }
-    
+
     document.title = `${isDirty ? '* ' : ''}${filename} - ${baseTitle}`;
 }
 
@@ -85,11 +85,15 @@ const recentProjectsList = document.getElementById('recent-projects-list');
 const appHeader = document.getElementById('app-header');
 const sidebar = document.getElementById('sidebar');
 
+const workspaceTop = document.getElementById('workspace-top');
+const workspaceTimeline = document.getElementById('workspace-timeline');
+const timelineFrames = document.getElementById('timeline-frames');
+const btnTimelineAdd = document.getElementById('btn-timeline-add');
+
 function showWorkspace() {
     startScreen.style.display = 'none';
-    workspaceLeft.style.display = 'block';
-    workspaceRight.style.display = 'block';
-    resizer.style.display = 'block';
+    workspaceTop.style.display = 'flex';
+    workspaceTimeline.style.display = 'flex';
     if (appHeader) appHeader.style.display = 'flex';
     if (sidebar) sidebar.style.display = 'flex';
 }
@@ -98,17 +102,17 @@ async function updateRecentProjectsList() {
     if (!recentProjectsList) return;
     const projects = await window.api.getRecentProjects();
     recentProjectsList.innerHTML = '';
-    
+
     if (projects.length === 0) {
         recentProjectsList.innerHTML = '<li class="empty-recent" style="padding: 1rem; color: var(--text-muted); text-align: center;">No recent projects</li>';
         return;
     }
-    
+
     projects.forEach(projPath => {
         const li = document.createElement('li');
         li.className = 'recent-item';
         li.style.cssText = 'background: rgba(255, 255, 255, 0.05); padding: 0.8rem 1rem; margin-bottom: 0.5rem; border-radius: 6px; cursor: pointer; border: 1px solid transparent; display: flex; flex-direction: column; gap: 0.2rem; transition: all 0.2s ease;';
-        
+
         li.onmouseover = () => {
             li.style.background = 'rgba(255, 255, 255, 0.1)';
             li.style.borderColor = 'var(--accent-color)';
@@ -117,21 +121,21 @@ async function updateRecentProjectsList() {
             li.style.background = 'rgba(255, 255, 255, 0.05)';
             li.style.borderColor = 'transparent';
         };
-        
+
         const filename = projPath.split('\\').pop().split('/').pop();
         const nameSpan = document.createElement('strong');
         nameSpan.innerText = filename;
         nameSpan.style.color = '#fff';
-        
+
         const pathSpan = document.createElement('span');
         pathSpan.className = 'recent-path';
         pathSpan.innerText = projPath;
         pathSpan.style.fontSize = '0.8rem';
         pathSpan.style.color = 'var(--text-muted)';
-        
+
         li.appendChild(nameSpan);
         li.appendChild(pathSpan);
-        
+
         li.addEventListener('click', async () => {
             const response = await window.api.openRecentProject(projPath);
             if (response && response.data) {
@@ -146,6 +150,7 @@ async function updateRecentProjectsList() {
                 updateAnimationList();
                 drawGrid();
                 startPreview();
+                updateTimeline();
                 clearDirty();
                 showWorkspace();
                 showStatus('Project loaded.', 'success');
@@ -155,7 +160,7 @@ async function updateRecentProjectsList() {
                 updateRecentProjectsList();
             }
         });
-        
+
         recentProjectsList.appendChild(li);
     });
 }
@@ -167,9 +172,9 @@ let statusTimeout = null;
 function showStatus(message, type = 'info') {
     statusBar.innerText = message;
     statusBar.className = `status-bar ${type}`;
-    
+
     if (statusTimeout) clearTimeout(statusTimeout);
-    
+
     // Auto-clear success messages after a few seconds
     if (type === 'success' || type === 'error') {
         statusTimeout = setTimeout(() => {
@@ -189,9 +194,9 @@ resizer.addEventListener('mousedown', (e) => {
 
 window.addEventListener('mousemove', (e) => {
     if (!isResizing) return;
-    const workspaceRect = document.querySelector('.workspace').getBoundingClientRect();
+    const workspaceRect = workspaceTop.getBoundingClientRect();
     const newRightWidth = workspaceRect.right - e.clientX;
-    
+
     if (newRightWidth > 150 && newRightWidth < workspaceRect.width - 150) {
         workspaceRight.style.width = `${newRightWidth}px`;
     }
@@ -219,17 +224,17 @@ function updatePreviewTransform() {
 previewScroll.addEventListener('wheel', (e) => {
     if (selectedAnimationIndex < 0) return;
     e.preventDefault();
-    
+
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.min(Math.max(0.1, previewZoom * zoomFactor), 30);
-    
+
     const rect = previewScroll.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    
+
     previewPanX = mouseX - (mouseX - previewPanX) * (newZoom / previewZoom);
     previewPanY = mouseY - (mouseY - previewPanY) * (newZoom / previewZoom);
-    
+
     previewZoom = newZoom;
     updatePreviewTransform();
 });
@@ -320,10 +325,11 @@ document.getElementById('btn-create-new').addEventListener('click', async () => 
     project.exportClassName = null;
     selectedAnimationIndex = -1;
     currentFilePath = null;
-    
+
     await loadSpritesheet();
     modalNewProject.classList.remove('active');
     updateAnimationList();
+    updateTimeline();
     showWorkspace();
     markDirty();
     showStatus('New project created.', 'success');
@@ -333,7 +339,7 @@ document.getElementById('btn-create-new').addEventListener('click', async () => 
 // Lädt das Bild via Base64 (sicherer als lokale Dateipfade im Browser)
 async function loadSpritesheet() {
     if (!project.imagePath) return;
-    
+
     // Ruft IPC main auf, um Datei zu lesen und Base64-String zurückzugeben
     const base64 = await window.api.readImageBase64(project.imagePath);
     if (!base64) return;
@@ -344,7 +350,7 @@ async function loadSpritesheet() {
         imgSpritesheet.style.display = 'block';
         canvasGrid.width = imgSpritesheet.width;
         canvasGrid.height = imgSpritesheet.height;
-        
+
         // Reset Zoom & Pan (Zentriere Bild)
         zoom = 1;
         const wsRect = workspace.getBoundingClientRect();
@@ -363,20 +369,30 @@ async function loadSpritesheet() {
 function drawGrid() {
     if (!imgSpritesheet.src) return;
 
-    // Crisp canvas trick: internal resolution matches zoom, visually remains 1:1
-    canvasGrid.width = imgSpritesheet.width * zoom;
-    canvasGrid.height = imgSpritesheet.height * zoom;
-    canvasGrid.style.width = `${imgSpritesheet.width * zoom}px`;
-    canvasGrid.style.height = `${imgSpritesheet.height * zoom}px`;
-    canvasGrid.style.transform = `scale(${1/zoom})`;
-    canvasGrid.style.transformOrigin = '0 0';
+    // Crisp canvas trick with memory limits to prevent OOM/GPU crashes
+    const MAX_CANVAS_DIMENSION = 4096;
+    let canvasScale = zoom;
+    if (imgSpritesheet.width * canvasScale > MAX_CANVAS_DIMENSION) {
+        canvasScale = MAX_CANVAS_DIMENSION / imgSpritesheet.width;
+    }
+    if (imgSpritesheet.height * canvasScale > MAX_CANVAS_DIMENSION) {
+        canvasScale = Math.min(canvasScale, MAX_CANVAS_DIMENSION / imgSpritesheet.height);
+    }
 
-    ctxGrid.scale(zoom, zoom);
+    canvasGrid.width = imgSpritesheet.width * canvasScale;
+    canvasGrid.height = imgSpritesheet.height * canvasScale;
     
+    // Set size to exactly match image and let container scale handle visual zoom
+    canvasGrid.style.width = `${imgSpritesheet.width}px`;
+    canvasGrid.style.height = `${imgSpritesheet.height}px`;
+    canvasGrid.style.transform = 'none';
+
+    ctxGrid.scale(canvasScale, canvasScale);
+
     ctxGrid.clearRect(0, 0, imgSpritesheet.width, imgSpritesheet.height);
-    
+
     const { width, height, spacing, margin } = project.config;
-    
+
     // Berechne Spalten und Zeilen
     const cols = Math.floor((imgSpritesheet.width - margin * 2 + spacing) / (width + spacing));
     const rows = Math.floor((imgSpritesheet.height - margin * 2 + spacing) / (height + spacing));
@@ -388,26 +404,26 @@ function drawGrid() {
         for (let col = 0; col < cols; col++) {
             const x = margin + col * (width + spacing);
             const y = margin + row * (height + spacing);
-            
+
             // Basis-Raster zeichnen
             ctxGrid.strokeRect(x, y, width, height);
-            
+
             // Wenn eine Animation selektiert ist, hebe ihre Frames hervor
             if (selectedAnimationIndex >= 0) {
                 const anim = project.animations[selectedAnimationIndex];
                 const frameIndex = row * cols + col;
-                
+
                 const frameOrder = anim.frames.indexOf(frameIndex);
                 if (frameOrder !== -1) {
                     // Frame gehört zur ausgewählten Animation
                     ctxGrid.fillStyle = 'rgba(0, 230, 118, 0.4)'; // Akzentfarbe transparent
                     ctxGrid.fillRect(x, y, width, height);
-                    
+
                     // Schriftgröße bleibt scharf und proportional zur Zoomstufe
                     const maxFontSize = height * 0.8;
                     const fontSize = Math.min(Math.max(12 / zoom, 2), maxFontSize);
                     ctxGrid.font = `bold ${fontSize}px Inter`;
-                    
+
                     const textStr = (frameOrder + 1).toString();
                     const textWidth = ctxGrid.measureText(textStr).width;
                     const radius = Math.max(textWidth, fontSize) / 2 + (4 / zoom);
@@ -415,14 +431,14 @@ function drawGrid() {
                     // Schwarzer Kreis als Hintergrund
                     ctxGrid.fillStyle = 'rgba(0, 0, 0, 0.8)';
                     ctxGrid.beginPath();
-                    ctxGrid.arc(x + width/2, y + height/2, radius, 0, Math.PI * 2);
+                    ctxGrid.arc(x + width / 2, y + height / 2, radius, 0, Math.PI * 2);
                     ctxGrid.fill();
 
                     // Text
                     ctxGrid.fillStyle = '#ffffff';
                     ctxGrid.textAlign = 'center';
                     ctxGrid.textBaseline = 'middle';
-                    ctxGrid.fillText(textStr, x + width/2, y + height/2);
+                    ctxGrid.fillText(textStr, x + width / 2, y + height / 2);
                 }
             }
         }
@@ -430,11 +446,16 @@ function drawGrid() {
 }
 
 // Click-Event um Frames zur Animation hinzuzufügen/zu entfernen
+let dragStartX = 0;
+let dragStartY = 0;
+
 canvasGrid.addEventListener('click', (e) => {
     if (selectedAnimationIndex < 0) {
         alert("Please create or select an animation in the left sidebar first.");
         return;
     }
+    const dist = Math.hypot(e.clientX - dragStartX, e.clientY - dragStartY);
+    if (dist > 5) return; // it was a drag, ignore click
 
     const rect = canvasGrid.getBoundingClientRect();
     const clickX = (e.clientX - rect.left) / zoom;
@@ -453,18 +474,19 @@ canvasGrid.addEventListener('click', (e) => {
             if (clickX >= x && clickX <= x + width && clickY >= y && clickY <= y + height) {
                 const frameIndex = row * cols + col;
                 const anim = project.animations[selectedAnimationIndex];
-                
+
                 const existingIndex = anim.frames.indexOf(frameIndex);
                 if (existingIndex !== -1) {
                     anim.frames.splice(existingIndex, 1);
                 } else {
                     anim.frames.push(frameIndex);
                 }
-                
+
                 drawGrid();
                 startPreview();
+                updateTimeline();
                 markDirty();
-                
+
                 // Aktualisiere nur den Text des ausgewählten Elements, anstatt die ganze Liste neu zu bauen
                 const items = animList.querySelectorAll('.anim-item');
                 if (items[selectedAnimationIndex]) {
@@ -472,6 +494,101 @@ canvasGrid.addEventListener('click', (e) => {
                     span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
                 }
                 return;
+            }
+        }
+    }
+});
+
+// Drag and Drop from Grid to Timeline
+let isDraggingFrame = false;
+let draggedFrameIndex = -1;
+let dragGhost = null;
+
+canvasGrid.addEventListener('mousedown', (e) => {
+    if (selectedAnimationIndex < 0 || e.button !== 0) return;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+
+    const rect = canvasGrid.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) / zoom;
+    const clickY = (e.clientY - rect.top) / zoom;
+
+    const { width, height, spacing, margin } = project.config;
+    const cols = Math.floor((canvasGrid.width - margin * 2 + spacing) / (width + spacing));
+    const rows = Math.floor((canvasGrid.height - margin * 2 + spacing) / (height + spacing));
+
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const x = margin + col * (width + spacing);
+            const y = margin + row * (height + spacing);
+
+            if (clickX >= x && clickX <= x + width && clickY >= y && clickY <= y + height) {
+                isDraggingFrame = true;
+                draggedFrameIndex = row * cols + col;
+
+                // create ghost using div to prevent GPU issues
+                dragGhost = document.createElement('div');
+                dragGhost.style.width = width + 'px';
+                dragGhost.style.height = height + 'px';
+                dragGhost.style.backgroundImage = `url(${imgSpritesheet.src})`;
+                dragGhost.style.backgroundPosition = `-${x}px -${y}px`;
+                dragGhost.style.imageRendering = 'pixelated';
+
+                dragGhost.style.position = 'fixed';
+                dragGhost.style.pointerEvents = 'none';
+                dragGhost.style.zIndex = '1000';
+                dragGhost.style.opacity = '0.8';
+                dragGhost.style.left = e.clientX + 'px';
+                dragGhost.style.top = e.clientY + 'px';
+                dragGhost.style.transform = 'translate(-50%, -50%) scale(2)';
+                document.body.appendChild(dragGhost);
+                return;
+            }
+        }
+    }
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (isDraggingFrame && dragGhost) {
+        dragGhost.style.left = e.clientX + 'px';
+        dragGhost.style.top = e.clientY + 'px';
+    }
+});
+
+window.addEventListener('mouseup', (e) => {
+    if (isDraggingFrame) {
+        isDraggingFrame = false;
+        if (dragGhost) {
+            dragGhost.remove();
+            dragGhost = null;
+        }
+
+        const elem = document.elementFromPoint(e.clientX, e.clientY);
+        const frameEl = elem ? elem.closest('.timeline-frame') : null;
+        const timelineArea = elem ? elem.closest('#workspace-timeline') : null;
+
+        if (frameEl) {
+            const tIdx = parseInt(frameEl.getAttribute('data-timeline-idx'));
+            const anim = project.animations[selectedAnimationIndex];
+            anim.frames[tIdx] = draggedFrameIndex;
+
+            markDirty();
+            drawGrid();
+            startPreview();
+            updateTimeline();
+        } else if (timelineArea) {
+            const anim = project.animations[selectedAnimationIndex];
+            anim.frames.push(draggedFrameIndex);
+
+            markDirty();
+            drawGrid();
+            startPreview();
+            updateTimeline();
+
+            const items = animList.querySelectorAll('.anim-item');
+            if (items[selectedAnimationIndex]) {
+                const span = items[selectedAnimationIndex].querySelector('span');
+                span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
             }
         }
     }
@@ -515,7 +632,7 @@ document.getElementById('btn-confirm-new-anim').addEventListener('click', () => 
     nameInput.value = '';
     fpsInput.value = '15';
     loopInput.checked = true;
-    
+
     modalNewAnim.classList.remove('active');
 
     // Automatisch die neu erstellte Animation auswählen
@@ -523,6 +640,7 @@ document.getElementById('btn-confirm-new-anim').addEventListener('click', () => 
     updateAnimationList();
     drawGrid();
     startPreview();
+    updateTimeline();
     markDirty();
 });
 
@@ -573,15 +691,15 @@ function updateAnimationList() {
     project.animations.forEach((anim, index) => {
         const li = document.createElement('li');
         li.className = `anim-item ${index === selectedAnimationIndex ? 'selected' : ''}`;
-        
+
         const span = document.createElement('span');
         span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
-        
+
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.innerHTML = '&times;';
         removeBtn.title = "Delete animation";
-        
+
         // Löschen
         removeBtn.onclick = (e) => {
             e.stopPropagation();
@@ -594,6 +712,7 @@ function updateAnimationList() {
             updateAnimationList();
             drawGrid();
             startPreview();
+            updateTimeline();
             markDirty();
         };
 
@@ -606,6 +725,7 @@ function updateAnimationList() {
             });
             drawGrid();
             startPreview();
+            updateTimeline();
             updateEditControls();
         };
 
@@ -616,13 +736,139 @@ function updateAnimationList() {
     updateEditControls();
 }
 
+function updateTimeline() {
+    if (!timelineFrames) return;
+    timelineFrames.innerHTML = '';
+
+    if (selectedAnimationIndex < 0) return;
+    const anim = project.animations[selectedAnimationIndex];
+
+    anim.frames.forEach((frameIndex, idx) => {
+        const frameEl = document.createElement('div');
+        frameEl.className = 'timeline-frame glass-panel';
+        frameEl.style.cssText = `
+            width: 80px; height: 80px; min-width: 80px;
+            position: relative; cursor: grab;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px solid transparent; transition: border-color 0.2s;
+            overflow: hidden;
+        `;
+
+        const frameImg = document.createElement('div');
+        frameImg.style.width = '100%';
+        frameImg.style.height = '100%';
+        frameImg.style.imageRendering = 'pixelated';
+        frameImg.style.backgroundRepeat = 'no-repeat';
+        frameEl.appendChild(frameImg);
+
+        if (imgSpritesheet.src) {
+            const { width, height, spacing, margin } = project.config;
+            const cols = Math.floor((imgSpritesheet.width - margin * 2 + spacing) / (width + spacing));
+            const col = frameIndex % cols;
+            const row = Math.floor(frameIndex / cols);
+            const sx = margin + col * (width + spacing);
+            const sy = margin + row * (height + spacing);
+
+            // Calculate scale to fit within the 80x80 container while preserving aspect ratio
+            const scale = Math.min(60 / width, 60 / height);
+            const scaledWidth = width * scale;
+            const scaledHeight = height * scale;
+
+            frameImg.style.backgroundImage = `url(${imgSpritesheet.src})`;
+            // Scale the background image size according to the scale factor
+            frameImg.style.backgroundSize = `${imgSpritesheet.width * scale}px ${imgSpritesheet.height * scale}px`;
+            frameImg.style.backgroundPosition = `-${sx * scale}px -${sy * scale}px`;
+
+            // Center the div inside the container
+            frameImg.style.width = `${scaledWidth}px`;
+            frameImg.style.height = `${scaledHeight}px`;
+        }
+
+        const idxLabel = document.createElement('div');
+        idxLabel.innerText = idx + 1;
+        idxLabel.style.cssText = 'position: absolute; top: -8px; left: -8px; background: var(--accent-color); color: #000; font-weight: bold; font-size: 0.7rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;';
+        frameEl.appendChild(idxLabel);
+
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'frame-actions';
+        actionsEl.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); display: none; justify-content: space-around; padding: 2px 0;';
+
+        const btnDup = document.createElement('button');
+        btnDup.innerHTML = '⧉';
+        btnDup.title = 'Duplicate Frame';
+        btnDup.style.cssText = 'background: transparent; border: none; color: #fff; padding: 2px 5px; font-size: 0.8rem; cursor: pointer; min-width: 0;';
+        btnDup.onclick = (e) => {
+            e.stopPropagation();
+            anim.frames.splice(idx + 1, 0, frameIndex);
+            markDirty();
+            drawGrid();
+            startPreview();
+            updateTimeline();
+
+            const items = animList.querySelectorAll('.anim-item');
+            if (items[selectedAnimationIndex]) {
+                const span = items[selectedAnimationIndex].querySelector('span');
+                span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
+            }
+        };
+
+        const btnDel = document.createElement('button');
+        btnDel.innerHTML = '×';
+        btnDel.title = 'Delete Frame';
+        btnDel.style.cssText = 'background: transparent; border: none; color: var(--danger-color); padding: 2px 5px; font-size: 1rem; cursor: pointer; min-width: 0; line-height: 1;';
+        btnDel.onclick = (e) => {
+            e.stopPropagation();
+            anim.frames.splice(idx, 1);
+            markDirty();
+            drawGrid();
+            startPreview();
+            updateTimeline();
+
+            const items = animList.querySelectorAll('.anim-item');
+            if (items[selectedAnimationIndex]) {
+                const span = items[selectedAnimationIndex].querySelector('span');
+                span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
+            }
+        };
+
+        actionsEl.appendChild(btnDup);
+        actionsEl.appendChild(btnDel);
+        frameEl.appendChild(actionsEl);
+
+        frameEl.onmouseover = () => actionsEl.style.display = 'flex';
+        frameEl.onmouseout = () => actionsEl.style.display = 'none';
+
+        frameEl.setAttribute('data-timeline-idx', idx);
+
+        timelineFrames.appendChild(frameEl);
+    });
+}
+
+if (btnTimelineAdd) {
+    btnTimelineAdd.addEventListener('click', () => {
+        if (selectedAnimationIndex < 0) return;
+        const anim = project.animations[selectedAnimationIndex];
+        anim.frames.push(0);
+        markDirty();
+        drawGrid();
+        startPreview();
+        updateTimeline();
+
+        const items = animList.querySelectorAll('.anim-item');
+        if (items[selectedAnimationIndex]) {
+            const span = items[selectedAnimationIndex].querySelector('span');
+            span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
+        }
+    });
+}
+
 // --- Echtzeit Vorschau ---
 
 // Startet den Loop für die Canvas-Vorschau
 function startPreview() {
     clearInterval(previewInterval);
     currentPreviewFrame = 0;
-    
+
     // Vorschau löschen, wenn nichts ausgewählt ist
     if (selectedAnimationIndex < 0) {
         ctxPreview.clearRect(0, 0, canvasPreview.width, canvasPreview.height);
@@ -654,7 +900,7 @@ function startPreview() {
         if (canvasPreview.width !== width || canvasPreview.height !== height) {
             canvasPreview.width = width;
             canvasPreview.height = height;
-            
+
             // Zentriere die Vorschau beim ersten Mal oder bei Änderung der Frame-Größe
             const rect = previewScroll.getBoundingClientRect();
             previewPanX = (rect.width - width * previewZoom) / 2;
@@ -664,7 +910,7 @@ function startPreview() {
 
         ctxPreview.clearRect(0, 0, width, height);
         ctxPreview.imageSmoothingEnabled = false; // Knackige Pixel-Art erhalten
-        
+
         // Schneide das Segment aus dem Originalbild aus und zeichne es
         ctxPreview.drawImage(imgSpritesheet, sx, sy, width, height, 0, 0, width, height);
 
@@ -692,12 +938,12 @@ async function saveProjectData() {
         showStatus("There is no project to save yet.", "error");
         return false;
     }
-    
+
     // Wir klonen das Objekt und löschen base64, um die JSON-Datei schlank zu halten.
     // Das Bild wird beim Neuladen anhand des Pfads (imagePath) neu eingelesen.
     const dataToSave = { ...project };
     delete dataToSave.imageBase64;
-    
+
     // IPC Call
     const savedPath = await window.api.saveProject(dataToSave, currentFilePath);
     if (savedPath) {
@@ -737,6 +983,7 @@ async function openProjectHandler() {
         updateAnimationList();
         drawGrid();
         startPreview();
+        updateTimeline();
         clearDirty();
         showWorkspace();
         showStatus('Project loaded.', 'success');
@@ -756,7 +1003,7 @@ btnExportHaxe.addEventListener('click', () => {
         showStatus("Please add at least one animation first.", "error");
         return;
     }
-    
+
     if (project.exportPath && project.exportClassName) {
         performHaxeExport(project.exportClassName, project.exportPath);
     } else {
@@ -772,7 +1019,7 @@ document.getElementById('btn-export-settings').addEventListener('click', () => {
         showStatus("Please add at least one animation first.", "error");
         return;
     }
-    
+
     if (project.exportClassName) {
         document.getElementById('export-classname').value = project.exportClassName;
     }
@@ -789,21 +1036,21 @@ async function performHaxeExport(className, existingPath) {
     haxeCode += `import flixel.FlxSprite;\n`;
     haxeCode += `import flixel.animation.FlxAnimationController;\n\n`;
     haxeCode += `class ${className} extends FlxAnimationController {\n\n`;
-    
+
     haxeCode += `\tpublic function new(sprite:FlxSprite) {\n`;
     haxeCode += `\t\tsuper(sprite);\n`;
     haxeCode += `\t\tregisterAnimations();\n`;
     haxeCode += `\t}\n\n`;
-    
+
     haxeCode += `\tprivate function registerAnimations():Void {\n`;
-    
+
     project.animations.forEach(anim => {
         const framesStr = `[${anim.frames.join(', ')}]`;
         // Da wir direkt innerhalb von FlxAnimationController sind, rufen wir this.add() auf.
         // HaxeFlixel Syntax: add(Name, [FrameArray], Framerate, Looped)
         haxeCode += `\t\tthis.add("${anim.name}", ${framesStr}, ${anim.fps}, ${anim.loop});\n`;
     });
-    
+
     haxeCode += `\t}\n}\n`;
 
     // IPC Call zum Speichern der .hx Datei
@@ -813,7 +1060,7 @@ async function performHaxeExport(className, existingPath) {
         project.exportPath = response.filePath;
         markDirty(); // Speichert den exportPath mit im Projekt
         modalExport.classList.remove('active');
-        
+
         // Auto-save the project so the export path and any changes are persisted immediately
         const saved = await saveProjectData();
         if (saved) {
@@ -850,20 +1097,20 @@ function updateTransform() {
 workspace.addEventListener('wheel', (e) => {
     if (!project.imagePath) return;
     e.preventDefault();
-    
+
     // Zoom berechnen
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.min(Math.max(0.1, zoom * zoomFactor), 30); // Max 30x Zoom für feines Pixelart
-    
+
     // Position relativ zum Workspace finden
     const wsRect = workspace.getBoundingClientRect();
     const mouseX = e.clientX - wsRect.left;
     const mouseY = e.clientY - wsRect.top;
-    
+
     // Neue Pan-Werte berechnen, sodass Maus über demselben Pixel bleibt
     panX = mouseX - (mouseX - panX) * (newZoom / zoom);
     panY = mouseY - (mouseY - panY) * (newZoom / zoom);
-    
+
     zoom = newZoom;
     updateTransform();
     drawGrid();
@@ -910,7 +1157,7 @@ window.api.onRequestClose(async () => {
         window.api.forceClose();
         return;
     }
-    
+
     // User fragen, da es ungespeicherte Änderungen gibt
     const response = await window.api.confirmClose();
     // response: 0 = Save, 1 = Don't Save, 2 = Cancel

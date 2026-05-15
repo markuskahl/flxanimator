@@ -62,7 +62,7 @@
 
         </aside>
 
-        <section class="workspace">
+        <section class="workspace" style="flex-direction: column;">
             <div id="start-screen" class="start-screen glass-panel">
                 <div class="start-content">
                     <h1>FlxAnimator</h1>
@@ -80,22 +80,36 @@
                 </div>
             </div>
 
-            <div id="workspace-left" class="workspace-pane" style="display: none;">
-                <div class="workspace-scroll" id="workspace-scroll">
-                    <div class="grid-container glass-panel" id="grid-container">
-                        <img id="spritesheet-img" style="display:none;" alt="Spritesheet" />
-                        <canvas id="grid-canvas"></canvas>
+            <div id="workspace-top" style="display: none; flex: 1; min-height: 0; position: relative;">
+                <div id="workspace-left" class="workspace-pane">
+                    <div class="workspace-scroll" id="workspace-scroll">
+                        <div class="grid-container glass-panel" id="grid-container">
+                            <img id="spritesheet-img" style="display:none;" alt="Spritesheet" />
+                            <canvas id="grid-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="workspace-resizer" class="resizer"></div>
+
+                <div id="workspace-right" class="workspace-pane">
+                    <div class="workspace-scroll" id="preview-scroll">
+                        <div class="preview-transform-container" id="preview-transform-container">
+                            <canvas id="preview-canvas"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="workspace-resizer" class="resizer" style="display: none;"></div>
-
-            <div id="workspace-right" class="workspace-pane" style="display: none;">
-                <div class="workspace-scroll" id="preview-scroll">
-                    <div class="preview-transform-container" id="preview-transform-container">
-                        <canvas id="preview-canvas"></canvas>
+            <div id="workspace-timeline" class="glass-panel" style="display: none; height: 180px; flex-shrink: 0; flex-direction: column; border-top: 1px solid var(--border-color); border-left: none; border-right: none; border-bottom: none; background: rgba(15, 17, 21, 0.95);">
+                <div class="timeline-header" style="padding: 0.5rem 1rem; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color);">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Timeline</div>
+                    <div class="timeline-actions" style="display: flex; gap: 0.5rem;">
+                        <button id="btn-timeline-add" class="secondary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; width: auto;">Add Frame</button>
                     </div>
+                </div>
+                <div id="timeline-frames" class="scrollable" style="display: flex; flex-direction: row; flex: 1; padding: 1rem; gap: 1rem; align-items: center; overflow-y: hidden; overflow-x: auto; margin-top: 0;">
+                    <!-- Timeline items -->
                 </div>
             </div>
         </section>
