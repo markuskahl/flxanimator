@@ -1005,10 +1005,13 @@ btnExportHaxe.addEventListener('click', () => {
     }
 
     if (project.exportPath && project.exportClassName) {
-        performHaxeExport(project.exportClassName, project.exportPath);
+        performHaxeExport(project.exportClassName, project.exportPath, project.exportPackageName || '');
     } else {
         if (project.exportClassName) {
             document.getElementById('export-classname').value = project.exportClassName;
+        }
+        if (project.exportPackageName !== undefined) {
+            document.getElementById('export-packagename').value = project.exportPackageName;
         }
         modalExport.classList.add('active');
     }
@@ -1023,6 +1026,9 @@ document.getElementById('btn-export-settings').addEventListener('click', () => {
     if (project.exportClassName) {
         document.getElementById('export-classname').value = project.exportClassName;
     }
+    if (project.exportPackageName !== undefined) {
+        document.getElementById('export-packagename').value = project.exportPackageName;
+    }
     modalExport.classList.add('active');
 });
 
@@ -1030,9 +1036,9 @@ document.getElementById('btn-cancel-export').addEventListener('click', () => {
     modalExport.classList.remove('active');
 });
 
-async function performHaxeExport(className, existingPath) {
+async function performHaxeExport(className, existingPath, packageName = '') {
     // Wir erben explizit von FlxAnimationController (wie gefordert)
-    let haxeCode = `package;\n\n`;
+    let haxeCode = packageName ? `package ${packageName};\n\n` : `package;\n\n`;
     haxeCode += `import flixel.FlxSprite;\n`;
     haxeCode += `import flixel.animation.FlxAnimationController;\n\n`;
     haxeCode += `class ${className} extends FlxAnimationController {\n\n`;
@@ -1057,6 +1063,7 @@ async function performHaxeExport(className, existingPath) {
     const response = await window.api.exportHaxe({ className, code: haxeCode, existingPath });
     if (response && response.success) {
         project.exportClassName = className;
+        project.exportPackageName = packageName;
         project.exportPath = response.filePath;
         markDirty(); // Speichert den exportPath mit im Projekt
         modalExport.classList.remove('active');
@@ -1076,7 +1083,8 @@ async function performHaxeExport(className, existingPath) {
 // Generiert die Haxe-Klasse und öffnet den Speichern-Dialog
 document.getElementById('btn-confirm-export').addEventListener('click', () => {
     const className = document.getElementById('export-classname').value.trim() || 'MyAnimationController';
-    performHaxeExport(className, null);
+    const packageName = document.getElementById('export-packagename').value.trim();
+    performHaxeExport(className, null, packageName);
 });
 
 // ==========================================
