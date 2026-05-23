@@ -432,8 +432,8 @@ canvasGrid.addEventListener('click', (e) => {
     const clickY = (e.clientY - rect.top) / zoom;
 
     const { width, height, spacing, margin } = project.config;
-    const cols = Math.floor((canvasGrid.width - margin * 2 + spacing) / (width + spacing));
-    const rows = Math.floor((canvasGrid.height - margin * 2 + spacing) / (height + spacing));
+    const cols = Math.floor((imgSpritesheet.width - margin * 2 + spacing) / (width + spacing));
+    const rows = Math.floor((imgSpritesheet.height - margin * 2 + spacing) / (height + spacing));
 
     // Prüfe welche Zelle geklickt wurde
     for (let row = 0; row < rows; row++) {
@@ -484,8 +484,8 @@ canvasGrid.addEventListener('mousedown', (e) => {
     const clickY = (e.clientY - rect.top) / zoom;
 
     const { width, height, spacing, margin } = project.config;
-    const cols = Math.floor((canvasGrid.width - margin * 2 + spacing) / (width + spacing));
-    const rows = Math.floor((canvasGrid.height - margin * 2 + spacing) / (height + spacing));
+    const cols = Math.floor((imgSpritesheet.width - margin * 2 + spacing) / (width + spacing));
+    const rows = Math.floor((imgSpritesheet.height - margin * 2 + spacing) / (height + spacing));
 
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
