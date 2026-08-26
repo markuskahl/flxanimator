@@ -1,12 +1,25 @@
-const { app, BrowserWindow, ipcMain, dialog, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeTheme, protocol, net } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
+const { pathToFileURL, fileURLToPath } = require('url');
 
-// Deaktiviere Hardwarebeschleunigung, um 'GPU state invalid' Abstürze in Chromium zu verhindern
-app.disableHardwareAcceleration();
-app.commandLine.appendSwitch('disable-gpu');
-app.commandLine.appendSwitch('disable-gpu-compositing');
-app.commandLine.appendSwitch('log-level', '3'); // Unterdrückt nervige Chromium-Fehlermeldungen im Terminal
+// Registriere sicheres Schema für schnelles, speicherschonendes Asset-Streaming
+protocol.registerSchemesAsPrivileged([
+    {
+        scheme: 'app-asset',
+        privileges: {
+            standard: true,
+            secure: true,
+            supportFetchAPI: true,
+            bypassCSP: true,
+            stream: true,
+            corsEnabled: true
+        }
+    }
+]);
+
+// Chromium Log-Level dämpfen
+app.commandLine.appendSwitch('log-level', '3');
 
 // Force dark theme so the window background and titlebar don't flash white
 nativeTheme.themeSource = 'dark';
@@ -60,7 +73,7 @@ function createWindow() {
     const win = new BrowserWindow({
         width: 1280,
         height: 800,
-        backgroundColor: '#121212',
+        backgroundColor: '#0f1115',
         show: false,
         autoHideMenuBar: true,
         icon: path.join(__dirname, 'icon.png'),
@@ -93,6 +106,29 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+    // Handler für das Streamen lokaler Spritesheet-Dateien ohne Base64-Overhead
+    protocol.handle('app-asset', async (request) => {
+        try {
+            const fileUrl = request.url.replace(/^app-asset:\/\//, 'file://');
+            const filePath = fileURLToPath(fileUrl);
+            const buffer = await fs.readFile(filePath);
+            const ext = path.extname(filePath).toLowerCase().substring(1) || 'png';
+            const mimeTypes = {
+                png: 'image/png',
+                jpg: 'image/jpeg',
+                jpeg: 'image/jpeg',
+                webp: 'image/webp'
+            };
+            const mimeType = mimeTypes[ext] || 'image/png';
+            return new Response(buffer, {
+                headers: { 'Content-Type': mimeType }
+            });
+        } catch (error) {
+            console.error("Fehler beim Laden von app-asset:", error);
+            return new Response('Asset not found', { status: 404 });
+        }
+    });
+
     createWindow();
 
     app.on('activate', () => {
@@ -117,7 +153,7 @@ ipcMain.handle('select-image', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Select Spritesheet',
         properties: ['openFile'],
-        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg'] }]
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
     });
     if (!canceled && filePaths.length > 0) {
         return filePaths[0];
@@ -125,11 +161,11 @@ ipcMain.handle('select-image', async () => {
     return null;
 });
 
-// 2. Bild als Base64 laden (umgeht lokale Dateirestriktionen im Renderer)
+// 2. Bild als Base64 laden (Fallback-Option)
 ipcMain.handle('read-image-base64', async (event, filePath) => {
     try {
         const buffer = await fs.readFile(filePath);
-        const ext = path.extname(filePath).toLowerCase().substring(1);
+        const ext = path.extname(filePath).toLowerCase().substring(1) || 'png';
         return `data:image/${ext};base64,${buffer.toString('base64')}`;
     } catch (error) {
         console.error("Fehler beim Lesen des Bildes:", error);
@@ -200,12 +236,8 @@ ipcMain.handle('open-recent-project', async (event, filePath) => {
     }
 });
 
-
-
-// 6. Beenden erzwingen (aus Frontend, falls keine ungespeicherten Änderungen vorliegen)
+// 6. Beenden erzwingen
 ipcMain.on('close-app', () => {
-    // Da wir das oben per event listener fangen, lösen wir den 'close' event des Fensters aus, 
-    // was wiederum 'request-close' auslöst, damit der Ablauf immer gleich ist!
     const win = BrowserWindow.getAllWindows()[0];
     if (win) win.close();
 });
