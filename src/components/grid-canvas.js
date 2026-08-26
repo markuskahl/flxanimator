@@ -63,6 +63,12 @@ export class GridCanvasComponent {
 
             this.updateTransform();
             this.drawGrid();
+
+            this.store.emit(Events.SPRITESHEET_READY, {
+                image: this.imgSpritesheet,
+                width: this.imgSpritesheet.naturalWidth || this.imgSpritesheet.width,
+                height: this.imgSpritesheet.naturalHeight || this.imgSpritesheet.height
+            });
         };
 
         this.imgSpritesheet.onerror = () => {

@@ -25,6 +25,7 @@ export class TimelineComponent {
         this.store.on(Events.ANIMATION_SELECTED, () => this.updateTimeline());
         this.store.on(Events.FRAMES_CHANGED, () => this.updateTimeline());
         this.store.on(Events.SPRITESHEET_LOADED, () => this.updateTimeline());
+        this.store.on(Events.SPRITESHEET_READY, () => this.updateTimeline());
 
         if (this.btnAddFrame) {
             this.btnAddFrame.addEventListener('click', () => {
@@ -45,8 +46,8 @@ export class TimelineComponent {
 
         const project = this.store.getProject();
         const { width, height } = project.config;
-        const imgWidth = this.imgSpritesheet ? this.imgSpritesheet.width : 0;
-        const imgHeight = this.imgSpritesheet ? this.imgSpritesheet.height : 0;
+        const imgWidth = this.imgSpritesheet ? (this.imgSpritesheet.naturalWidth || this.imgSpritesheet.width) : 0;
+        const imgHeight = this.imgSpritesheet ? (this.imgSpritesheet.naturalHeight || this.imgSpritesheet.height) : 0;
         const { cols } = calculateGridDimensions(imgWidth, imgHeight, project.config);
 
         anim.frames.forEach((frameIndex, idx) => {

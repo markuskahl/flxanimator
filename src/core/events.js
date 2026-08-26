@@ -7,6 +7,7 @@ export const Events = {
     PROJECT_DIRTY_CHANGED: 'project:dirty-changed',
     PROJECT_PATH_CHANGED: 'project:path-changed',
     SPRITESHEET_LOADED: 'spritesheet:loaded',
+    SPRITESHEET_READY: 'spritesheet:ready',
     
     ANIMATIONS_CHANGED: 'animations:changed',
     ANIMATION_SELECTED: 'animation:selected',

@@ -31,6 +31,7 @@ export class PreviewCanvasComponent {
         this.store.on(Events.ANIMATION_UPDATED, () => this.startPreview());
         this.store.on(Events.FRAMES_CHANGED, () => this.startPreview());
         this.store.on(Events.SPRITESHEET_LOADED, () => this.startPreview());
+        this.store.on(Events.SPRITESHEET_READY, () => this.startPreview());
 
         this.setupPanAndZoom();
     }
@@ -109,7 +110,9 @@ export class PreviewCanvasComponent {
 
             const project = this.store.getProject();
             const { width, height } = project.config;
-            const { cols } = calculateGridDimensions(this.imgSpritesheet.width, this.imgSpritesheet.height, project.config);
+            const imgWidth = this.imgSpritesheet.naturalWidth || this.imgSpritesheet.width;
+            const imgHeight = this.imgSpritesheet.naturalHeight || this.imgSpritesheet.height;
+            const { cols } = calculateGridDimensions(imgWidth, imgHeight, project.config);
 
             const frameIndex = anim.frames[this.currentPreviewFrame];
             const coords = getFrameCoords(frameIndex, cols, project.config);
