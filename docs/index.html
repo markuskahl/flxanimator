@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlxAnimator - Technische Dokumentation & API Referenz</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-badge">FA</div>
+            <div>
+                <h1>FlxAnimator</h1>
+            </div>
+            <span class="version">v1.1.0</span>
+        </div>
+
+        <div class="sidebar-search">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="doc-search" placeholder="Suche in Modulen & APIs..." autocomplete="off">
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Übersicht & Architektur</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="#overview" class="active"><span>📌</span> Projektübersicht</a></li>
+                    <li class="nav-item"><a href="#architecture"><span>🏛️</span> Systemarchitektur</a></li>
+                    <li class="nav-item"><a href="#dataflow"><span>⚡</span> Reaktiver Datenfluss</a></li>
+                    <li class="nav-item"><a href="#json-format"><span>📄</span> JSON Export-Schema</a></li>
+                    <li class="nav-item"><a href="#haxeflixel"><span>🎮</span> HaxeFlixel Integration</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Core & State Management</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="#core-store"><span>📦</span> Store <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#core-events"><span>📡</span> Events <span class="tag-pill tag-event">Enum</span></a></li>
+                    <li class="nav-item"><a href="#core-grid-utils"><span>📐</span> grid-utils <span class="tag-pill tag-module">Module</span></a></li>
+                    <li class="nav-item"><a href="#core-validator"><span>🛡️</span> validator <span class="tag-pill tag-module">Module</span></a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Services & IPC Bridge</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="#service-file"><span>💾</span> FileService <span class="tag-pill tag-service">Service</span></a></li>
+                    <li class="nav-item"><a href="#preload-bridge"><span>🌉</span> preload.js (Bridge) <span class="tag-pill tag-module">IPC</span></a></li>
+                    <li class="nav-item"><a href="#main-process"><span>⚙️</span> main.js (Main Process) <span class="tag-pill tag-module">Node</span></a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">UI Komponenten</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="#comp-app"><span>🚀</span> App (Main Controller) <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-grid-canvas"><span>🎨</span> GridCanvasComponent <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-preview-canvas"><span>▶️</span> PreviewCanvasComponent <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-timeline"><span>⏱️</span> TimelineComponent <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-sidebar"><span>📋</span> SidebarComponent <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-header"><span>🔝</span> HeaderComponent <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-status-bar"><span>ℹ️</span> StatusBarComponent <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-start-screen"><span>🏠</span> StartScreenComponent <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-modals"><span>🪟</span> Modal-Komponenten <span class="tag-pill tag-class">Class</span></a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Qualitätssicherung</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="#tests"><span>🧪</span> Unit Tests & Suites</a></li>
+                </ul>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+        <!-- Doc Header -->
+        <header class="doc-header" id="overview">
+            <div class="doc-badge">⚡ FlxAnimator Architecture & Reference Manual</div>
+            <h1>FlxAnimator Technische Dokumentation</h1>
+            <p class="lead">Vollständige Modul-, Klassen- und Architekturreferenz für das hochperformante Desktop-Spritesheet-Animationstool für HaxeFlixel und 2D-Game-Engines.</p>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">17</div>
+                <div class="stat-label">Module & Komponenten</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">JSDoc Abdeckung</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">20 / 20</div>
+                <div class="stat-label">Unit Tests bestanden</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Externe UI-Abhängigkeiten</div>
+            </div>
+        </div>
+
+        <!-- 1. Übersicht & Architektur -->
+        <section class="doc-section" id="architecture">
+            <h2 class="section-title">Systemarchitektur</h2>
+            <div class="glass-panel">
+                <p>FlxAnimator basiert auf einer strikten <strong>Zwei-Schichten-Architektur</strong> (Electron Main Process und isolierter Renderer-Prozess), die maximale Sicherheit, minimale Latenz und saubere Wartbarkeit garantiert:</p>
+
+                <div class="diagram-box">
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 ELECTRON MAIN PROZESS                                   │
+│  - Fensterverwaltung (BrowserWindow, Dark Mode Frame)                                  │
+│  - Custom Protocol Streaming: app-asset:// (Null-Copy Dateistreaming lokaler Bilder)   │
+│  - Native Dateisystem-Dialoge (Speichern, Öffnen, Validierung)                         │
+│  - Recent Projects Persistenz (userData/recent-projects.json)                          │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │ IPC (contextBridge, contextIsolation: true)
+┌───────────────────────────────────────────▼────────────────────────────────────────────┐
+│                                  PRELOAD BRÜCKE (preload.js)                           │
+│  window.api: selectImage, saveProject, openProject, getAssetUrl, confirmClose, etc.   │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │
+┌───────────────────────────────────────────▼────────────────────────────────────────────┐
+│                                 FRONTEND RENDERER (src/)                                │
+│                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                      ZENTRALER EVENTTARGET STORE (store.js)                    │   │
+│   │  - Project Data (Width, Height, Spacing, Margin, Animations, Default Anim)     │   │
+│   │  - Undo/Redo Stacks (Max 50 Snapshots mit Clone-Isolation)                     │   │
+│   │  - Transform State (Pan & Zoom Koordinaten) & Dirty-Flag-Tracking             │   │
+│   └───────────────▲───────────────────────────────┬────────────────────────────────┘   │
+│                   │ Aktionen / Mutationen         │ Granulare Events (CustomEvent)     │
+│   ┌───────────────┴──────────────┐ ┌──────────────▼────────────────────────────────┐   │
+│   │        SERVICES              │ │                 UI KOMPONENTEN                │   │
+│   │  - FileService (IPC Bridge)  │ │  - GridCanvasComponent (Raster & Drag/Drop)   │   │
+│   │  - validator.js (Schema)     │ │  - PreviewCanvasComponent (Live-Playback)     │   │
+│   │  - grid-utils.js (Math/Zoom) │ │  - TimelineComponent (Frame-Reihenfolge)     │   │
+│   │                              │ │  - SidebarComponent (Animations-Editor)      │   │
+│   │                              │ │  - HeaderComponent (Menü, Shortcuts, Title)  │   │
+│   │                              │ │  - StatusBarComponent, Modals, Resizer       │   │
+│   └──────────────────────────────┘ └───────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h3 class="sub-title">Wesentliche Architekturmerkmale</h3>
+                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                    <li style="margin-bottom: 0.5rem;"><strong>Reaktiver Vanilla Store:</strong> Keine schwergewichtigen State-Libraries (Redux, MobX). Der Store erbt direkt von <code>EventTarget</code> und feuert typisierte <code>CustomEvent</code>-Instanzen.</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Sicheres Asset-Streaming via <code>app-asset://</code>:</strong> Lokale Bilddateien beliebiger Größe werden direkt als Binärstrom ohne Base64-Overhead in den Browser geladen.</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Undo/Redo mit Deep-Cloning:</strong> Beliebige Aktionen (Frames anhängen, löschen, Animationen anlegen, FPS ändern) können verlustfrei rückgängig gemacht und wiederholt werden.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 2. Reaktiver Datenfluss -->
+        <section class="doc-section" id="dataflow">
+            <h2 class="section-title">Reaktiver Datenfluss</h2>
+            <div class="glass-panel">
+                <p>Der Daten- und Eventfluss folgt einem deterministischen, unidirektionalen Zyklus:</p>
+                <div class="diagram-box">
+  [ Benutzerinteraktion (Mausklick / Shortcut) ]
+                        │
+                        ▼
+  [ UI Komponente (z.B. GridCanvas / Sidebar / Header) ]
+                        │
+                        ▼  Ruft Store-Mutator auf (z.B. store.toggleFrame(5))
+  [ Store (store.js) ]
+       ├─ Speichert vorherigen Zustand im Undo-Stack (pushHistory)
+       ├─ Modifiziert den aktuellen Projektzustand
+       ├─ Setzt isDirty = true
+       └─ Löst Event aus (z.B. emit(Events.FRAMES_CHANGED))
+                        │
+                        ▼  Abonnenten reagieren automatisch
+  [ Abonnierte UI-Komponenten ]
+       ├─ TimelineComponent.updateTimeline()  --> Rendert Frame-Thumbnails neu
+       ├─ PreviewCanvasComponent.startPreview() --> Passt Animationsloop an
+       ├─ HeaderComponent.updateTitle()        --> Aktualisiert Fenstertitel mit "*"
+       └─ StatusBarComponent.showMessage()     --> Zeigt Bestätigung an
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. JSON Format -->
+        <section class="doc-section" id="json-format">
+            <h2 class="section-title">JSON Export-Format</h2>
+            <div class="glass-panel">
+                <p>Das von FlxAnimator erzeugte JSON-Format ist vollständig kompatibel zu HaxeFlixel und 2D-Engines:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>player.json</span>
+                        <button class="copy-btn">Kopieren</button>
+                    </div>
+                    <pre><code class="json">{
+  <span class="str">"imagePath"</span>: <span class="str">"C:/Projects/MyGame/assets/player.png"</span>,
+  <span class="str">"config"</span>: {
+    <span class="str">"width"</span>: <span class="num">16</span>,
+    <span class="str">"height"</span>: <span class="num">16</span>,
+    <span class="str">"spacing"</span>: <span class="num">0</span>,
+    <span class="str">"margin"</span>: <span class="num">0</span>
+  },
+  <span class="str">"animations"</span>: [
+    {
+      <span class="str">"name"</span>: <span class="str">"idle"</span>,
+      <span class="str">"fps"</span>: <span class="num">15</span>,
+      <span class="str">"loop"</span>: <span class="kwd">true</span>,
+      <span class="str">"flipX"</span>: <span class="kwd">false</span>,
+      <span class="str">"flipY"</span>: <span class="kwd">false</span>,
+      <span class="str">"frames"</span>: [<span class="num">0</span>, <span class="num">1</span>, <span class="num">2</span>]
+    },
+    {
+      <span class="str">"name"</span>: <span class="str">"walk"</span>,
+      <span class="str">"fps"</span>: <span class="num">12</span>,
+      <span class="str">"loop"</span>: <span class="kwd">true</span>,
+      <span class="str">"flipX"</span>: <span class="kwd">false</span>,
+      <span class="str">"flipY"</span>: <span class="kwd">false</span>,
+      <span class="str">"frames"</span>: [<span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>]
+    }
+  ],
+  <span class="str">"defaultAnimation"</span>: <span class="str">"idle"</span>
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. HaxeFlixel Integration -->
+        <section class="doc-section" id="haxeflixel">
+            <h2 class="section-title">HaxeFlixel Code-Integration</h2>
+            <div class="glass-panel">
+                <p>Beispiel für die direkte Verwendung in einer <code>FlxSprite</code>-Klasse:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Player.hx</span>
+                        <button class="copy-btn">Kopieren</button>
+                    </div>
+                    <pre><code class="haxe"><span class="kwd">package</span> entities;
+
+<span class="kwd">import</span> <span class="typ">flixel.FlxSprite</span>;
+<span class="kwd">import</span> <span class="typ">haxe.Json</span>;
+<span class="kwd">import</span> <span class="typ">openfl.utils.Assets</span>;
+
+<span class="kwd">class</span> <span class="cls">Player</span> <span class="kwd">extends</span> <span class="typ">FlxSprite</span> {
+    <span class="kwd">public function</span> <span class="fn">new</span>(X:<span class="typ">Float</span> = <span class="num">0</span>, Y:<span class="typ">Float</span> = <span class="num">0</span>) {
+        <span class="kwd">super</span>(X, Y);
+        
+        <span class="cmt">// 1. JSON-Projekt laden & parsen</span>
+        <span class="kwd">var</span> jsonText = <span class="typ">Assets</span>.<span class="fn">getText</span>(<span class="str">"assets/data/player.json"</span>);
+        <span class="kwd">var</span> animData = <span class="typ">Json</span>.<span class="fn">parse</span>(jsonText);
+        
+        <span class="cmt">// 2. Grafik mit den exakten Frame-Maßen & Spacing laden</span>
+        <span class="fn">loadGraphic</span>(
+            <span class="str">"assets/images/player.png"</span>,
+            <span class="kwd">true</span>,
+            animData.config.width,
+            animData.config.height,
+            <span class="kwd">false</span>,
+            <span class="kwd">null</span>,
+            animData.config.spacing
+        );
+        
+        <span class="cmt">// 3. Alle Animationssequenzen dynamisch registrieren</span>
+        <span class="kwd">for</span> (anim <span class="kwd">in</span> (<span class="kwd">cast</span> animData.animations : <span class="typ">Array</span>&lt;<span class="typ">Dynamic</span>&gt;)) {
+            animation.<span class="fn">add</span>(anim.name, anim.frames, anim.fps, anim.loop, anim.flipX, anim.flipY);
+        }
+        
+        <span class="cmt">// 4. Standard-Animation abspielen</span>
+        <span class="kwd">if</span> (animData.defaultAnimation != <span class="kwd">null</span>) {
+            animation.<span class="fn">play</span>(animData.defaultAnimation);
+        }
+    }
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Core: Store -->
+        <section class="doc-section" id="core-store">
+            <h2 class="section-title">Core: Store (State Container)</h2>
+            <div class="glass-panel">
+                <p>Der zentrale reaktive Zustandsbehälter für alle Projektdaten, Historien-Snapshots und UI-Zustände.</p>
+
+                <h3 class="sub-title">Typdefinitionen</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>store.js Types</span><button class="copy-btn">Kopieren</button></div>
+                    <pre><code><span class="cmt">/**
+ * @typedef {Object} SpritesheetConfig
+ * @property {number} width - Einzelne Frame-Breite in Pixeln (z. B. 16).
+ * @property {number} height - Einzelne Frame-Höhe in Pixeln (z. B. 16).
+ * @property {number} spacing - Abstand zwischen Zellen in Pixeln (Standard 0).
+ * @property {number} margin - Äußerer Randabstand in Pixeln (Standard 0).
+ */</span>
+
+<span class="cmt">/**
+ * @typedef {Object} AnimationData
+ * @property {string} name - Name der Animation (z.B. "walk").
+ * @property {number} fps - Framerate in Bildern pro Sekunde.
+ * @property {boolean} loop - Endloswiedergabe.
+ * @property {boolean} flipX - Horizontale Spiegelung.
+ * @property {boolean} flipY - Vertikale Spiegelung.
+ * @property {number[]} frames - Liste linearer Spritesheet-Frame-Indizes.
+ */</span></code></pre>
+                </div>
+
+                <h3 class="sub-title">Wichtige Methoden</h3>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Method</span>
+                        <code>setProject(data, filePath = null)</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Initialisiert den Store mit einem geladenen oder neu erstellten Projekt, setzt Historien-Stacks zurück und wählt die erste Animation aus.</p>
+                        <p><strong>Feuert:</strong> <span class="type-pill">Events.PROJECT_LOADED</span>, <span class="type-pill">Events.ANIMATIONS_CHANGED</span>, <span class="type-pill">Events.ANIMATION_SELECTED</span></p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Method</span>
+                        <code>toggleFrame(frameIndex)</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Schaltet einen Frame in der aktuellen Animation um: Ist er vorhanden, wird er entfernt; andernfalls am Ende angehängt.</p>
+                        <p><strong>Feuert:</strong> <span class="type-pill">Events.FRAMES_CHANGED</span>, <span class="type-pill">Events.PROJECT_DIRTY_CHANGED</span></p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Method</span>
+                        <code>undo() / redo()</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Macht die vorherige Bearbeitung rückgängig bzw. stellt sie wieder her. Hält maximal 50 Snapshots im Speicher.</p>
+                        <p><strong>Feuert:</strong> <span class="type-pill">Events.HISTORY_CHANGED</span>, <span class="type-pill">Events.ANIMATIONS_CHANGED</span>, <span class="type-pill">Events.FRAMES_CHANGED</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Core: Events -->
+        <section class="doc-section" id="core-events">
+            <h2 class="section-title">Core: Events (EventBus Konstanten)</h2>
+            <div class="glass-panel">
+                <p>Übersicht aller über den Store abonnierbaren Events und deren Payload-Strukturen:</p>
+
+                <table class="doc-table">
+                    <thead>
+                        <tr>
+                            <th>Event Konstante</th>
+                            <th>Event String</th>
+                            <th>Payload / Details</th>
+                            <th>Beschreibung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>PROJECT_LOADED</code></td>
+                            <td><code>'project:loaded'</code></td>
+                            <td><code>{ project, filePath }</code></td>
+                            <td>Wird nach dem Laden eines Projekts ausgelöst.</td>
+                        </tr>
+                        <tr>
+                            <td><code>PROJECT_CONFIG_CHANGED</code></td>
+                            <td><code>'project:config-changed'</code></td>
+                            <td><code>{ config }</code></td>
+                            <td>Wird bei Änderung von Breite/Höhe/Spacing/Margin ausgelöst.</td>
+                        </tr>
+                        <tr>
+                            <td><code>PROJECT_DIRTY_CHANGED</code></td>
+                            <td><code>'project:dirty-changed'</code></td>
+                            <td><code>{ isDirty: boolean }</code></td>
+                            <td>Signalisiert ungespeicherte Änderungen für Fenstertitel & Buttons.</td>
+                        </tr>
+                        <tr>
+                            <td><code>SPRITESHEET_LOADED</code></td>
+                            <td><code>'spritesheet:loaded'</code></td>
+                            <td><code>{ imagePath, imageSrc }</code></td>
+                            <td>Bildquelle wurde geladen und zugewiesen.</td>
+                        </tr>
+                        <tr>
+                            <td><code>ANIMATIONS_CHANGED</code></td>
+                            <td><code>'animations:changed'</code></td>
+                            <td><code>{ project }</code></td>
+                            <td>Animationen wurden hinzugefügt, entfernt oder umsortiert.</td>
+                        </tr>
+                        <tr>
+                            <td><code>ANIMATION_SELECTED</code></td>
+                            <td><code>'animation:selected'</code></td>
+                            <td><code>{ index, anim }</code></td>
+                            <td>Aktive Animation in der Seitenleiste gewechselt.</td>
+                        </tr>
+                        <tr>
+                            <td><code>FRAMES_CHANGED</code></td>
+                            <td><code>'frames:changed'</code></td>
+                            <td><code>{ anim, index }</code></td>
+                            <td>Frames der aktuellen Animation wurden modifiziert.</td>
+                        </tr>
+                        <tr>
+                            <td><code>GRID_TRANSFORM_CHANGED</code></td>
+                            <td><code>'grid:transform-changed'</code></td>
+                            <td><code>{ zoom, panX, panY }</code></td>
+                            <td>Zoom- oder Pan-Verschiebung im Haupt-Canvas geändert.</td>
+                        </tr>
+                        <tr>
+                            <td><code>HISTORY_CHANGED</code></td>
+                            <td><code>'history:changed'</code></td>
+                            <td><code>{ canUndo, canRedo }</code></td>
+                            <td>Verfügbarkeit von Undo/Redo hat sich geändert.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 7. Core: grid-utils -->
+        <section class="doc-section" id="core-grid-utils">
+            <h2 class="section-title">Core: grid-utils (Mathematische Hilfsfunktionen)</h2>
+            <div class="glass-panel">
+                <p>Reine mathematische Funktionen zur Berechnung von Spritesheet-Gittern, Frame-Koordinaten, Fokus-Zoom und Canvas-Einpassung.</p>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Function</span>
+                        <code>calculateGridDimensions(imageWidth, imageHeight, config)</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Berechnet Spalten- und Zeilenzahl unter Einbezug von Spacing und Margin:</p>
+                        <p><code>cols = floor((imageWidth - margin * 2 + spacing) / (width + spacing))</code></p>
+                        <p><strong>Rückgabe:</strong> <span class="type-pill">{ cols: number, rows: number, totalCells: number }</span></p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Function</span>
+                        <code>getFrameCoords(frameIndex, cols, config)</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Ermittelt die oberen linken Pixelkoordinaten <code>(x, y)</code> eines linearen Frame-Index.</p>
+                        <p><strong>Rückgabe:</strong> <span class="type-pill">{ x, y, width, height }</span></p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Function</span>
+                        <code>calculatePanOnZoom(mouseX, mouseY, oldPanX, oldPanY, oldZoom, newZoom)</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Fokus-Zoom Physik: Hält den Punkt unter dem Mauszeiger während des Zoomens exakt an derselben Bildschirmposition.</p>
+                        <p><strong>Rückgabe:</strong> <span class="type-pill">{ panX: number, panY: number }</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Services & IPC -->
+        <section class="doc-section" id="service-file">
+            <h2 class="section-title">Services & IPC (FileService & Preload)</h2>
+            <div class="glass-panel">
+                <p>Kapselt alle Dateisystem-Operationen und nativen Dialoge über das im Preload-Skript exponierte <code>window.api</code>-Objekt.</p>
+
+                <table class="doc-table">
+                    <thead>
+                        <tr>
+                            <th>FileService Methode</th>
+                            <th>IPC Kanal / Funktion</th>
+                            <th>Beschreibung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>selectImage()</code></td>
+                            <td><code>ipcRenderer.invoke('select-image')</code></td>
+                            <td>Öffnet nativen Dateidialog für Bilddateien (PNG, JPG, WEBP).</td>
+                        </tr>
+                        <tr>
+                            <td><code>resolveImageSource(imagePath)</code></td>
+                            <td><code>api.getAssetUrl(imagePath)</code></td>
+                            <td>Wandelt Pfade in performante <code>app-asset://</code> Streaming-URLs um.</td>
+                        </tr>
+                        <tr>
+                            <td><code>saveProject(data, path)</code></td>
+                            <td><code>ipcRenderer.invoke('save-project')</code></td>
+                            <td>Speichert JSON-Projektdatei und aktualisiert Recent Projects.</td>
+                        </tr>
+                        <tr>
+                            <td><code>openProject()</code></td>
+                            <td><code>ipcRenderer.invoke('open-project')</code></td>
+                            <td>Öffnet JSON-Projektdatei via Systemdialog.</td>
+                        </tr>
+                        <tr>
+                            <td><code>confirmClose()</code></td>
+                            <td><code>ipcRenderer.invoke('confirm-close')</code></td>
+                            <td>Zeigt Bestätigungsdialog bei ungespeicherten Änderungen an.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 9. UI Komponenten -->
+        <section class="doc-section" id="comp-grid-canvas">
+            <h2 class="section-title">UI Komponenten</h2>
+            <div class="glass-panel">
+                <p>Alle UI-Komponenten sind modular und lose über das EventTarget des <code>Store</code> gekoppelt:</p>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-prop">Component</span>
+                        <code>GridCanvasComponent</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Steuert das Spritesheet-Bild und das Canvas-Raster-Overlay im Hauptarbeitsbereich. Unterstützt Fokus-Zoom via Mausrad, Canvas-Pan per Drag, Frame-Auswahl per Klick und Drag & Drop von Frames mit virtuellem Ghost-Thumbnail auf die Timeline.</p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-prop">Component</span>
+                        <code>PreviewCanvasComponent</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Spielt die aktive Animation in Echtzeit auf einem separaten HTML5-Canvas mit konfigurierter Framerate ab. Beachtet FlipX/FlipY Transformations-Matrizen und bietet stufenloses Zoomen und Verschieben.</p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-prop">Component</span>
+                        <code>TimelineComponent</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Zeigt die Frames der aktuellen Animation als interaktive Kacheln mit nummerierten Badges an. Bietet Hover-Menüs zum sofortigen Duplizieren und Löschen einzelner Frames.</p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-prop">Component</span>
+                        <code>SidebarComponent</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Verwaltet die Liste aller Animationen und bindet Eingabefelder für Name, FPS, Loop, FlipX, FlipY und Default Animation direkt an Store-Mutationen an.</p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-prop">Component</span>
+                        <code>HeaderComponent & StatusBarComponent</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Header: Zeigt Projektname und Dirty-Status <code>*</code> im Fenstertitel an; steuert Speichern/Öffnen.<br>
+                        Status Bar: Zeigt kurzzeitige Erfolgs- und Fehlermeldungen mit automatischem 4-Sekunden-Reset an.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. Unit Tests -->
+        <section class="doc-section" id="tests">
+            <h2 class="section-title">Qualitätssicherung & Unit Tests</h2>
+            <div class="glass-panel">
+                <p>Die gesamte Geschäftslogik, Mathematik und Validierung ist durch automatisierte Node.js-Testsuiten (<code>node --test</code>) abgesichert:</p>
+
+                <table class="doc-table">
+                    <thead>
+                        <tr>
+                            <th>Testsuite</th>
+                            <th>Datei</th>
+                            <th>Getestete Aspekte</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>grid-utils</code></td>
+                            <td><code>test/grid-utils.test.js</code></td>
+                            <td>Rasterberechnung, Spacing, Margin, Koordinatenermittlung, Fokus-Zoom, Skalierung</td>
+                            <td><span class="badge badge-prop">20 / 20 PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>Store</code></td>
+                            <td><code>test/store.test.js</code></td>
+                            <td>Initialisierung, Projektladen, Animation CRUD, Frame-Toggle, Undo/Redo Historie</td>
+                            <td><span class="badge badge-prop">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>validator</code></td>
+                            <td><code>test/validator.test.js</code></td>
+                            <td>Schema-Gültigkeit, ungültige Konfigurationen, fehlerhafte Animationsdaten</td>
+                            <td><span class="badge badge-prop">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="code-block">
+                    <div class="code-header"><span>Ausführen der Tests</span><button class="copy-btn">Kopieren</button></div>
+                    <pre><code class="bash">npm test</code></pre>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,18 +1,65 @@
+/**
+ * @file timeline.js
+ * @description UI-Komponente für die Animations-Timeline am unteren Bildschirmrand.
+ * Rendert visuelle Thumbnails jedes Frames der aktiven Animation, nummerierte Badges
+ * und Aktions-Overlays zum Duplizieren und Löschen von Frames.
+ * @module components/timeline
+ */
+
 import { Events } from '../core/events.js';
 import { calculateGridDimensions, getFrameCoords, calculateFittedScale } from '../core/grid-utils.js';
 
+/**
+ * Komponente zur Steuerung und interaktiven Darstellung der Timeline-Frames.
+ * 
+ * @class
+ */
 export class TimelineComponent {
+    /**
+     * Erzeugt eine neue TimelineComponent.
+     * @param {import('../core/store.js').Store} store - Der zentrale Anwendungs-Store.
+     */
     constructor(store) {
+        /**
+         * @type {import('../core/store.js').Store}
+         */
         this.store = store;
 
+        /**
+         * Übergeordnetes Timeline-Container-Element (`#workspace-timeline`).
+         * @type {HTMLElement|null}
+         */
         this.timelineEl = document.getElementById('workspace-timeline');
+
+        /**
+         * Container für die gerenderten Frame-Elemente (`#timeline-frames`).
+         * @type {HTMLElement|null}
+         */
         this.timelineFrames = document.getElementById('timeline-frames');
+
+        /**
+         * Button zum Anhängen eines Standard-Frames (`#btn-timeline-add`).
+         * @type {HTMLButtonElement|null}
+         */
         this.btnAddFrame = document.getElementById('btn-timeline-add');
+
+        /**
+         * HTML-Image-Element des geladenen Spritesheets (`#spritesheet-img`).
+         * @type {HTMLImageElement|null}
+         */
         this.imgSpritesheet = document.getElementById('spritesheet-img');
 
         this.init();
     }
 
+    /**
+     * Initialisiert Event-Abonnements auf dem Store für Animationsauswahl, Frame-Änderungen und Spritesheet-Laden.
+     * @listens Events#VIEW_CHANGED
+     * @listens Events#ANIMATION_SELECTED
+     * @listens Events#FRAMES_CHANGED
+     * @listens Events#SPRITESHEET_LOADED
+     * @listens Events#SPRITESHEET_READY
+     */
     init() {
         if (!this.timelineFrames) return;
 
@@ -37,6 +84,10 @@ export class TimelineComponent {
         }
     }
 
+    /**
+     * Baut die Timeline-DOM-Kacheln für die aktuell ausgewählte Animation komplett neu auf.
+     * Berechnet die CSS-Background-Position für pixelperfekte Frame-Vorschauen im Thumbnail.
+     */
     updateTimeline() {
         if (!this.timelineFrames) return;
         this.timelineFrames.innerHTML = '';
@@ -133,3 +184,4 @@ export class TimelineComponent {
         });
     }
 }
+

@@ -1,3 +1,8 @@
+/**
+ * @file grid-utils.test.js
+ * @description Unit-Tests für mathematische Raster- und Koordinatenberechnungen in grid-utils.js.
+ */
+
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -20,8 +25,8 @@ describe('grid-utils', () => {
         });
 
         it('takes spacing and margin into account', () => {
-            // Width: margin(2) + frame(16) + spacing(2) + frame(16) + margin(2) = 38
-            // Height: margin(2) + frame(16) + margin(2) = 20
+            // Breite: margin(2) + frame(16) + spacing(2) + frame(16) + margin(2) = 38
+            // Höhe: margin(2) + frame(16) + margin(2) = 20
             const config = { width: 16, height: 16, spacing: 2, margin: 2 };
             const result = calculateGridDimensions(38, 20, config);
             assert.equal(result.cols, 2);
@@ -42,11 +47,11 @@ describe('grid-utils', () => {
             const config = { width: 16, height: 16, spacing: 2, margin: 4 };
             const cols = 4;
             
-            // Frame 0: row 0, col 0
+            // Frame 0: Zeile 0, Spalte 0
             const frame0 = getFrameCoords(0, cols, config);
             assert.deepEqual(frame0, { x: 4, y: 4, width: 16, height: 16 });
 
-            // Frame 5: row 1 (5/4=1), col 1 (5%4=1)
+            // Frame 5: Zeile 1 (5/4=1), Spalte 1 (5%4=1)
             // x = 4 + 1 * (16 + 2) = 22
             // y = 4 + 1 * (16 + 2) = 22
             const frame5 = getFrameCoords(5, cols, config);
@@ -75,10 +80,10 @@ describe('grid-utils', () => {
             const cols = 2;
             const rows = 2;
 
-            // In margin area (x < 10)
+            // Im Margin-Bereich (x < 10)
             assert.equal(getFrameIndexAtCoords(5, 5, cols, rows, config), -1);
 
-            // In spacing area (x = 28, cell 0 is [10..26], spacing is [26..30])
+            // Im Spacing-Bereich (x = 28, Zelle 0 ist [10..26], Spacing ist [26..30])
             assert.equal(getFrameIndexAtCoords(28, 15, cols, rows, config), -1);
         });
     });
@@ -99,7 +104,7 @@ describe('grid-utils', () => {
             const newZoom = 2;
 
             const { panX, panY } = calculatePanOnZoom(mouseX, mouseY, oldPanX, oldPanY, oldZoom, newZoom);
-            // formula: mouseX - (mouseX - oldPanX) * (newZoom / oldZoom) = 100 - (100) * 2 = -100
+            // Formel: mouseX - (mouseX - oldPanX) * (newZoom / oldZoom) = 100 - (100) * 2 = -100
             assert.equal(panX, -100);
             assert.equal(panY, -100);
         });
@@ -117,3 +122,4 @@ describe('grid-utils', () => {
         });
     });
 });
+

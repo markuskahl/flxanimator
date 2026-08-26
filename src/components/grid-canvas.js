@@ -1,3 +1,11 @@
+/**
+ * @file grid-canvas.js
+ * @description UI-Komponente für das Haupt-Spritesheet-Canvas (Workspace Grid Canvas).
+ * Rendert das Spritesheet-Bild mit dem überlagerten Schnittmuster-Raster (Grid Overlay),
+ * steuert Pan- und Zoom-Navigation und implementiert interaktive Klick-Selektion sowie Drag & Drop von Frames auf die Timeline.
+ * @module components/grid-canvas
+ */
+
 import { Events } from '../core/events.js';
 import {
     calculateGridDimensions,
@@ -6,32 +14,126 @@ import {
     calculatePanOnZoom
 } from '../core/grid-utils.js';
 
+/**
+ * Komponente zur Steuerung des interaktiven Spritesheet-Arbeitsbereichs.
+ * 
+ * @class
+ */
 export class GridCanvasComponent {
+    /**
+     * Erzeugt eine neue GridCanvasComponent.
+     * @param {import('../core/store.js').Store} store - Der zentrale Anwendungs-Store.
+     */
     constructor(store) {
+        /**
+         * @type {import('../core/store.js').Store}
+         */
         this.store = store;
 
+        /**
+         * DOM-Element des Spritesheet-Bildes (`#spritesheet-img`).
+         * @type {HTMLImageElement|null}
+         */
         this.imgSpritesheet = document.getElementById('spritesheet-img');
+
+        /**
+         * Canvas-Element für das Raster-Overlay (`#grid-canvas`).
+         * @type {HTMLCanvasElement|null}
+         */
         this.canvasGrid = document.getElementById('grid-canvas');
+
+        /**
+         * 2D-Rendering-Kontext des Raster-Canvas.
+         * @type {CanvasRenderingContext2D|null}
+         */
         this.ctxGrid = this.canvasGrid ? this.canvasGrid.getContext('2d') : null;
+
+        /**
+         * Container-Element für Bild und Canvas (`#grid-container`).
+         * @type {HTMLElement|null}
+         */
         this.gridContainer = document.getElementById('grid-container');
+
+        /**
+         * Übergeordneter Scroll-/Viewport-Bereich (`#workspace-scroll`).
+         * @type {HTMLElement|null}
+         */
         this.workspaceScroll = document.getElementById('workspace-scroll');
 
+        /**
+         * Aktueller Zoomfaktor des Workspace (1.0 = 100%).
+         * @type {number}
+         */
         this.zoom = 1;
+
+        /**
+         * Horizontale Verschiebung (Pan Offset) in Pixeln.
+         * @type {number}
+         */
         this.panX = 0;
+
+        /**
+         * Vertikale Verschiebung (Pan Offset) in Pixeln.
+         * @type {number}
+         */
         this.panY = 0;
+
+        /**
+         * Statusflag für aktives Verschieben des Workspace.
+         * @type {boolean}
+         */
         this.isPanning = false;
+
+        /**
+         * X-Startposition beim Beginn eines Pan-Vorgangs.
+         * @type {number}
+         */
         this.panStartX = 0;
+
+        /**
+         * Y-Startposition beim Beginn eines Pan-Vorgangs.
+         * @type {number}
+         */
         this.panStartY = 0;
 
+        /**
+         * X-Mauskoordinate beim Start eines Drag-Vorgangs.
+         * @type {number}
+         */
         this.dragStartX = 0;
+
+        /**
+         * Y-Mauskoordinate beim Start eines Drag-Vorgangs.
+         * @type {number}
+         */
         this.dragStartY = 0;
+
+        /**
+         * Statusflag, ob momentan ein Frame zur Timeline gezogen wird.
+         * @type {boolean}
+         */
         this.isDraggingFrame = false;
+
+        /**
+         * Frame-Index des momentan gezogenen Frames.
+         * @type {number}
+         */
         this.draggedFrameIndex = -1;
+
+        /**
+         * DOM-Element des mit dem Mauszeiger mitgeführten Ghost-Thumbnails beim Drag & Drop.
+         * @type {HTMLElement|null}
+         */
         this.dragGhost = null;
 
         this.init();
     }
 
+    /**
+     * Initialisiert Store-Event-Abonnements und Maus-Interaktionen.
+     * @listens Events#SPRITESHEET_LOADED
+     * @listens Events#PROJECT_LOADED
+     */
     init() {
         if (!this.canvasGrid || !this.workspaceScroll) return;
 
@@ -47,6 +149,13 @@ export class GridCanvasComponent {
         this.setupGridInteractions();
     }
 
+    /**
+     * Lädt die Spritesheet-Bildquelle in das HTML-Image-Element, zentriert die Ansicht
+     * und stößt das Neuzeichnen des Rasters an.
+     *
+     * @param {string} src - Bildquelle (app-asset:// URL oder Base64 Daten-URI).
+     * @fires Events#SPRITESHEET_READY
+     */
     loadImage(src) {
         if (!src || !this.imgSpritesheet) return;
 
@@ -78,6 +187,9 @@ export class GridCanvasComponent {
         this.imgSpritesheet.src = src;
     }
 
+    /**
+     * Aktualisiert die CSS-Transformation des Grid-Containers und synchronisiert die Werte mit dem Store.
+     */
     updateTransform() {
         if (this.gridContainer) {
             this.gridContainer.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.zoom})`;
@@ -85,6 +197,10 @@ export class GridCanvasComponent {
         this.store.setGridTransform({ zoom: this.zoom, panX: this.panX, panY: this.panY });
     }
 
+    /**
+     * Zeichnet das Schnittraster auf das Canvas-Overlay über dem Spritesheet-Bild.
+     * Passt die Linienstärke dynamisch an den Zoomfaktor an, um konstante 1px-Sichtbarkeit zu gewährleisten.
+     */
     drawGrid() {
         if (!this.imgSpritesheet || !this.imgSpritesheet.src || !this.ctxGrid) return;
 
@@ -124,6 +240,9 @@ export class GridCanvasComponent {
         }
     }
 
+    /**
+     * Konfiguriert Mausrad-Zoom und Workspace-Panning (mittlere Maustaste oder Rechtsklick/Drag).
+     */
     setupPanAndZoom() {
         // Zoom via Mausrad
         this.workspaceScroll.addEventListener('wheel', (e) => {
@@ -177,6 +296,9 @@ export class GridCanvasComponent {
         this.workspaceScroll.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
+    /**
+     * Richtet Interaktionen für Klicks auf Rasterzellen und Drag & Drop von Frames ein.
+     */
     setupGridInteractions() {
         this.canvasGrid.addEventListener('click', (e) => {
             const selectedIdx = this.store.getSelectedAnimationIndex();
@@ -272,3 +394,4 @@ export class GridCanvasComponent {
         });
     }
 }
+

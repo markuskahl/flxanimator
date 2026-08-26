@@ -1,14 +1,47 @@
+/**
+ * @file status-bar.js
+ * @description UI-Komponente für die Fußzeilen-Statusleiste (Status Bar).
+ * Zeigt Systemmeldungen, Benachrichtigungen über Speicher- und Ladevorgänge sowie Fehler mit automatischer Rücksetzung an.
+ * @module components/status-bar
+ */
+
 import { Events } from '../core/events.js';
 
+/**
+ * Komponente zur Steuerung und Aktualisierung der Statusleiste am unteren Bildschirmrand.
+ * 
+ * @class
+ */
 export class StatusBarComponent {
+    /**
+     * Erzeugt eine neue StatusBarComponent.
+     * @param {import('../core/store.js').Store} store - Der zentrale Anwendungs-Store.
+     */
     constructor(store) {
+        /**
+         * @type {import('../core/store.js').Store}
+         */
         this.store = store;
+
+        /**
+         * DOM-Element der Statusleiste (`#status-bar`).
+         * @type {HTMLElement|null}
+         */
         this.statusBarEl = document.getElementById('status-bar');
+
+        /**
+         * Timer-Handle für das automatische Zurücksetzen der Nachricht.
+         * @type {number|null}
+         */
         this.statusTimeout = null;
 
         this.init();
     }
 
+    /**
+     * Initialisiert Event-Abonnements auf dem Store.
+     * @listens Events#STATUS_MESSAGE
+     */
     init() {
         if (!this.statusBarEl) return;
 
@@ -18,6 +51,12 @@ export class StatusBarComponent {
         });
     }
 
+    /**
+     * Zeigt eine formatierte Statusnachricht mit optionalem Farb-Typ an und startet einen Auto-Reset-Timer.
+     *
+     * @param {string} message - Der anzuzeigende Statustext.
+     * @param {'info'|'success'|'error'|'warn'} [type='info'] - Nachrichtentyp für CSS-Styling.
+     */
     showMessage(message, type = 'info') {
         if (!this.statusBarEl) return;
 
@@ -37,3 +76,4 @@ export class StatusBarComponent {
         }
     }
 }
+

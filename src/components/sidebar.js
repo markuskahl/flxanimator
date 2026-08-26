@@ -1,24 +1,112 @@
+/**
+ * @file sidebar.js
+ * @description UI-Komponente für die linke Seitenleiste (Sidebar).
+ * Ermöglicht das Anlegen, Auswählen, Bearbeiten und Löschen von Animationen sowie die
+ * Echtzeit-Modifikation von Parametern (Name, FPS, Loop, FlipX, FlipY, Default Animation).
+ * @module components/sidebar
+ */
+
 import { Events } from '../core/events.js';
 
+/**
+ * @typedef {Object} SidebarCallbacks
+ * @property {() => void} [onAddAnimation] - Callback beim Klick auf "Add Animation".
+ */
+
+/**
+ * Komponente zur Steuerung der Animationsliste und der Animations-Detailformulare in der Seitenleiste.
+ * 
+ * @class
+ */
 export class SidebarComponent {
+    /**
+     * Erzeugt eine neue SidebarComponent.
+     * @param {import('../core/store.js').Store} store - Der zentrale Anwendungs-Store.
+     * @param {SidebarCallbacks} [callbacks] - Event-Callbacks.
+     */
     constructor(store, callbacks) {
+        /**
+         * @type {import('../core/store.js').Store}
+         */
         this.store = store;
+
+        /**
+         * @type {SidebarCallbacks}
+         */
         this.callbacks = callbacks || {};
 
+        /**
+         * DOM-Element der Seitenleiste (`#sidebar`).
+         * @type {HTMLElement|null}
+         */
         this.sidebarEl = document.getElementById('sidebar');
+
+        /**
+         * Button "Add Animation" (`#btn-add-anim`).
+         * @type {HTMLButtonElement|null}
+         */
         this.btnAddAnim = document.getElementById('btn-add-anim');
+
+        /**
+         * Container für die Bearbeitungsfelder der ausgewählten Animation (`#edit-anim-controls`).
+         * @type {HTMLElement|null}
+         */
         this.editAnimControls = document.getElementById('edit-anim-controls');
+
+        /**
+         * Eingabefeld für den Animationsnamen (`#anim-name`).
+         * @type {HTMLInputElement|null}
+         */
         this.editAnimName = document.getElementById('anim-name');
+
+        /**
+         * Eingabefeld für die FPS-Zahl (`#anim-fps`).
+         * @type {HTMLInputElement|null}
+         */
         this.editAnimFps = document.getElementById('anim-fps');
+
+        /**
+         * Checkbox für Loop (`#anim-loop`).
+         * @type {HTMLInputElement|null}
+         */
         this.editAnimLoop = document.getElementById('anim-loop');
+
+        /**
+         * Checkbox für horizontale Spiegelung (`#anim-flip-x`).
+         * @type {HTMLInputElement|null}
+         */
         this.editAnimFlipX = document.getElementById('anim-flip-x');
+
+        /**
+         * Checkbox für vertikale Spiegelung (`#anim-flip-y`).
+         * @type {HTMLInputElement|null}
+         */
         this.editAnimFlipY = document.getElementById('anim-flip-y');
+
+        /**
+         * Dropdown-Auswahl für die Standard-Animation (`#default-anim-select`).
+         * @type {HTMLSelectElement|null}
+         */
         this.selectDefaultAnim = document.getElementById('default-anim-select');
+
+        /**
+         * Listen-Element für Animationen (`#animation-list`).
+         * @type {HTMLUListElement|null}
+         */
         this.animListEl = document.getElementById('animation-list');
 
         this.init();
     }
 
+    /**
+     * Initialisiert Event-Abonnements auf dem Store für Animations- und View-Updates.
+     * @listens Events#VIEW_CHANGED
+     * @listens Events#ANIMATIONS_CHANGED
+     * @listens Events#ANIMATION_SELECTED
+     * @listens Events#ANIMATION_UPDATED
+     * @listens Events#FRAMES_CHANGED
+     * @listens Events#DEFAULT_ANIMATION_CHANGED
+     */
     init() {
         this.store.on(Events.VIEW_CHANGED, (e) => {
             if (this.sidebarEl) {
@@ -57,6 +145,9 @@ export class SidebarComponent {
         this.setupEditInputs();
     }
 
+    /**
+     * Richtet Event-Listener für Formulareingaben ein und synchronisiert Änderungen direkt mit dem Store.
+     */
     setupEditInputs() {
         if (this.editAnimName) {
             this.editAnimName.addEventListener('input', (e) => {
@@ -112,6 +203,9 @@ export class SidebarComponent {
         }
     }
 
+    /**
+     * Aktualisiert die Eingabefelder im Bearbeitungsbereich anhand der aktuell ausgewählten Animation.
+     */
     updateEditControls() {
         const anim = this.store.getSelectedAnimation();
         if (anim && this.editAnimControls) {
@@ -126,6 +220,9 @@ export class SidebarComponent {
         }
     }
 
+    /**
+     * Rendert die Liste aller im Projekt definierten Animationen mit Badges und Lösch-Buttons neu.
+     */
     updateAnimationList() {
         if (!this.animListEl) return;
         this.animListEl.innerHTML = '';
@@ -161,6 +258,9 @@ export class SidebarComponent {
         });
     }
 
+    /**
+     * Aktualisiert die aktive Selektionsmarkierung (`.selected`) in der DOM-Liste.
+     */
     updateSelectionHighlight() {
         if (!this.animListEl) return;
         const selectedIndex = this.store.getSelectedAnimationIndex();
@@ -169,6 +269,10 @@ export class SidebarComponent {
         });
     }
 
+    /**
+     * Aktualisiert die Textanzeige (Name, Frame-Anzahl, Default-Badge) eines spezifischen Listeneintrags.
+     * @param {number} index - Index der Animation.
+     */
     updateListItemText(index) {
         if (!this.animListEl || index < 0) return;
         const project = this.store.getProject();
@@ -183,6 +287,9 @@ export class SidebarComponent {
         }
     }
 
+    /**
+     * Aktualisiert die Optionen im Dropdown-Menü zur Wahl der Standard-Animation.
+     */
     updateDefaultAnimationSelect() {
         if (!this.selectDefaultAnim) return;
         const project = this.store.getProject();
@@ -210,3 +317,4 @@ export class SidebarComponent {
         }
     }
 }
+

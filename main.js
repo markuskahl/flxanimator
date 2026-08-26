@@ -1,3 +1,12 @@
+/**
+ * @file main.js
+ * @description Electron Main-Prozess für FlxAnimator.
+ * Verwaltet das Anwendungsfenster (BrowserWindow), das native Menü, IPC-Kommunikationskanäle,
+ * Streaming lokaler Bilddateien über das benutzerdefinierte Protokoll `app-asset://`
+ * sowie die Persistenz der zuletzt verwendeten Projektdateien (Recent Projects).
+ * @module main
+ */
+
 const { app, BrowserWindow, ipcMain, dialog, nativeTheme, protocol, net } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
@@ -18,15 +27,32 @@ protocol.registerSchemesAsPrivileged([
     }
 ]);
 
-// Chromium Log-Level dämpfen
+// Chromium Log-Level dämpfen (nur schwerwiegende Fehler)
 app.commandLine.appendSwitch('log-level', '3');
 
-// Force dark theme so the window background and titlebar don't flash white
+// Dunkles Theme erzwingen, um weiße Blitze beim Starten zu verhindern
 nativeTheme.themeSource = 'dark';
 
+/**
+ * Pfad zum Verzeichnis der Benutzerdaten.
+ * @type {string}
+ */
 const userDataPath = app.getPath('userData');
+
+/**
+ * Pfad zur JSON-Datei der zuletzt geöffneten Projekte.
+ * @type {string}
+ */
 const recentProjectsPath = path.join(userDataPath, 'recent-projects.json');
 
+/**
+ * Liest die Liste der zuletzt verwendeten Projektdateien aus der JSON-Konfigurationsdatei.
+ * Entfernt automatisch Pfade zu nicht mehr existierenden Dateien.
+ *
+ * @async
+ * @function getRecentProjects
+ * @returns {Promise<string[]>} Array mit validierten absoluten Dateipfaden.
+ */
 async function getRecentProjects() {
     try {
         const data = await fs.readFile(recentProjectsPath, 'utf-8');
@@ -53,6 +79,14 @@ async function getRecentProjects() {
     }
 }
 
+/**
+ * Fügt einen Dateipfad an den Anfang der Recent-Projects-Liste hinzu und begrenzt die Liste auf 10 Einträge.
+ *
+ * @async
+ * @function addRecentProject
+ * @param {string} filePath - Absoluter Pfad der geöffneten/gespeicherten Projektdatei.
+ * @returns {Promise<void>}
+ */
 async function addRecentProject(filePath) {
     let projects = await getRecentProjects();
     projects = projects.filter(p => p !== filePath);
@@ -69,6 +103,12 @@ async function addRecentProject(filePath) {
     }
 }
 
+/**
+ * Erzeugt und konfiguriert das Hauptfenster der Electron-Anwendung.
+ *
+ * @function createWindow
+ * @returns {BrowserWindow} Die erzeugte BrowserWindow-Instanz.
+ */
 function createWindow() {
     const win = new BrowserWindow({
         width: 1280,
@@ -79,7 +119,7 @@ function createWindow() {
         icon: path.join(__dirname, 'icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true, // WICHTIG: Sichert die App ab
+            contextIsolation: true, // WICHTIG: Sichert die App ab (Trennung von Node und DOM)
             nodeIntegration: false  // Deaktiviert Node.js direkt im Frontend
         }
     });
@@ -103,10 +143,17 @@ function createWindow() {
         isClosingConfirmed = true;
         app.quit();
     });
+
+    return win;
 }
 
+// Electron Lifecycle Initialisierung
 app.whenReady().then(() => {
-    // Handler für das Streamen lokaler Spritesheet-Dateien ohne Base64-Overhead
+    /**
+     * Protokoll-Handler für das benutzerdefinierte `app-asset://`-Schema.
+     * Ermöglicht extrem schnelles, speicherschonendes Streamen lokaler Spritesheet-Bilddateien
+     * ohne vorherige Base64-Kodierung.
+     */
     protocol.handle('app-asset', async (request) => {
         try {
             const fileUrl = request.url.replace(/^app-asset:\/\//, 'file://');
@@ -138,6 +185,7 @@ app.whenReady().then(() => {
     });
 });
 
+// Anwendungsbeendigung unter Windows/Linux
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
@@ -148,7 +196,11 @@ app.on('window-all-closed', () => {
 // IPC HANDLER FÜR MAIN <-> RENDERER
 // ==========================================
 
-// 1. Dateiauswahl für Spritesheet
+/**
+ * 1. Dateiauswahl-Dialog für Spritesheet-Bilder.
+ * @listens ipcMain:select-image
+ * @returns {Promise<string|null>} Ausgewählter Dateipfad oder null.
+ */
 ipcMain.handle('select-image', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Select Spritesheet',
@@ -161,7 +213,13 @@ ipcMain.handle('select-image', async () => {
     return null;
 });
 
-// 2. Bild als Base64 laden (Fallback-Option)
+/**
+ * 2. Bilddatei als Base64 einlesen (Fallback falls Streaming nicht greift).
+ * @listens ipcMain:read-image-base64
+ * @param {Electron.IpcMainInvokeEvent} event - IPC-Event
+ * @param {string} filePath - Absoluter Pfad der Bilddatei
+ * @returns {Promise<string|null>} Data-URI oder null bei Lesefehler.
+ */
 ipcMain.handle('read-image-base64', async (event, filePath) => {
     try {
         const buffer = await fs.readFile(filePath);
@@ -173,7 +231,14 @@ ipcMain.handle('read-image-base64', async (event, filePath) => {
     }
 });
 
-// 3. Projekt speichern (JSON)
+/**
+ * 3. Projekt speichern (JSON-Format).
+ * @listens ipcMain:save-project
+ * @param {Electron.IpcMainInvokeEvent} event - IPC-Event
+ * @param {Object} projectData - Zu speicherndes Projektdatenobjekt
+ * @param {string|null} existingPath - Bestehender Dateipfad oder null für Speichern-Unter Dialog
+ * @returns {Promise<string|null>} Gespeicherter Dateipfad oder null.
+ */
 ipcMain.handle('save-project', async (event, projectData, existingPath) => {
     let filePath = existingPath;
     
@@ -199,7 +264,11 @@ ipcMain.handle('save-project', async (event, projectData, existingPath) => {
     }
 });
 
-// 4. Projekt öffnen (JSON)
+/**
+ * 4. Projektdatei öffnen (JSON-Format).
+ * @listens ipcMain:open-project
+ * @returns {Promise<{ data: Object, filePath: string }|null>} Geparstes Projekt und Pfad.
+ */
 ipcMain.handle('open-project', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Open Project',
@@ -220,11 +289,22 @@ ipcMain.handle('open-project', async () => {
     return null;
 });
 
-// 4b. Recent Projects
+/**
+ * 5. Zuletzt verwendete Projekte abrufen.
+ * @listens ipcMain:get-recent-projects
+ * @returns {Promise<string[]>} Liste von Pfaden.
+ */
 ipcMain.handle('get-recent-projects', async () => {
     return await getRecentProjects();
 });
 
+/**
+ * 6. Projekt aus der Recent-Projects-Liste öffnen.
+ * @listens ipcMain:open-recent-project
+ * @param {Electron.IpcMainInvokeEvent} event - IPC-Event
+ * @param {string} filePath - Absoluter Pfad der Projektdatei
+ * @returns {Promise<{ data: Object, filePath: string }|null>} Geparstes Projekt und Pfad.
+ */
 ipcMain.handle('open-recent-project', async (event, filePath) => {
     try {
         const data = await fs.readFile(filePath, 'utf-8');
@@ -236,13 +316,20 @@ ipcMain.handle('open-recent-project', async (event, filePath) => {
     }
 });
 
-// 6. Beenden erzwingen
+/**
+ * 7. Hauptfenster schließen anfordern.
+ * @listens ipcMain:close-app
+ */
 ipcMain.on('close-app', () => {
     const win = BrowserWindow.getAllWindows()[0];
     if (win) win.close();
 });
 
-// 7. Dialog für ungespeicherte Änderungen
+/**
+ * 8. Dialog für ungespeicherte Änderungen anzeigen.
+ * @listens ipcMain:confirm-close
+ * @returns {Promise<number>} Antwortindex (0 = Speichern, 1 = Verwerfen, 2 = Abbrechen).
+ */
 ipcMain.handle('confirm-close', async () => {
     const { response } = await dialog.showMessageBox({
         type: 'warning',
@@ -254,3 +341,4 @@ ipcMain.handle('confirm-close', async () => {
     });
     return response;
 });
+

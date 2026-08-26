@@ -1,13 +1,50 @@
+/**
+ * @file resizer.js
+ * @description UI-Komponente für den vertikalen Splitter/Trennstrich (Split Pane Resizer).
+ * Ermöglicht das stufenlose Verändern der Breite des rechten Panels (Vorschau & Animationseinstellungen).
+ * @module components/resizer
+ */
+
+/**
+ * Komponente zur interaktiven Breitenanpassung des rechten Seitenpanels per Drag & Drop.
+ * 
+ * @class
+ */
 export class ResizerComponent {
+    /**
+     * Erzeugt eine neue ResizerComponent und bindet DOM-Elemente.
+     */
     constructor() {
+        /**
+         * Das DOM-Element des Splitters (`#workspace-resizer`).
+         * @type {HTMLElement|null}
+         */
         this.resizer = document.getElementById('workspace-resizer');
+
+        /**
+         * Das rechte Container-Element (`#workspace-right`).
+         * @type {HTMLElement|null}
+         */
         this.workspaceRight = document.getElementById('workspace-right');
+
+        /**
+         * Der übergeordnete Workspace-Top-Container (`#workspace-top`).
+         * @type {HTMLElement|null}
+         */
         this.workspaceTop = document.getElementById('workspace-top');
+
+        /**
+         * Statusflag, ob der Resizer momentan mit gedrückter Maustaste gezogen wird.
+         * @type {boolean}
+         */
         this.isResizing = false;
 
         this.init();
     }
 
+    /**
+     * Initialisiert Maus-Events für Drag & Drop (mousedown, mousemove, mouseup).
+     */
     init() {
         if (!this.resizer || !this.workspaceRight || !this.workspaceTop) return;
 
@@ -34,3 +71,4 @@ export class ResizerComponent {
         });
     }
 }
+

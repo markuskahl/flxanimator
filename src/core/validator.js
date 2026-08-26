@@ -1,11 +1,36 @@
 /**
- * Validierungs-Logik für Projektdaten und Animationen.
+ * @file validator.js
+ * @description Validierungs-Logik und Schema-Prüfung für FlxAnimator-Projektdaten und Animationsstrukturen.
+ * Stellt sicher, dass geladene oder importierte JSON-Dateien dem erwarteten Format entsprechen.
+ * @module core/validator
  */
 
 /**
- * Detaillierte Validierung eines Projekt-Objekts mit Fehlerbeschreibungen.
- * @param {any} data
- * @returns {{ valid: boolean, errors: string[] }}
+ * @typedef {Object} ValidationResult
+ * @property {boolean} valid - `true`, wenn das Projekt alle Schema-Anforderungen erfüllt, andernfalls `false`.
+ * @property {string[]} errors - Liste aufgetretener Validierungs- und Formatierungsfehler.
+ */
+
+/**
+ * Führt eine tiefgehende Validierung eines Projekt-Datenobjekts durch und sammelt alle Fehlerbeschreibungen.
+ * 
+ * Geprüft werden:
+ * - Objektstruktur und Basistypen
+ * - Gitterkonfiguration (`config.width`, `config.height`, `config.spacing`, `config.margin`)
+ * - Animationsarray mit Name, FPS (> 0), booleschem Loop-Flag und ganzzahligen Frame-Indizes (>= 0)
+ * - Gültigkeit der Standard-Animation (`defaultAnimation`)
+ *
+ * @param {unknown} data - Die zu überprüfenden Rohdaten (z. B. aus JSON geparst).
+ * @returns {ValidationResult} Ergebnisobjekt mit `valid`-Status und Fehlermeldungsliste.
+ * 
+ * @example
+ * const result = validateProject({
+ *   config: { width: 32, height: 32, spacing: 0, margin: 0 },
+ *   animations: [{ name: 'idle', fps: 12, loop: true, frames: [0, 1, 2] }]
+ * });
+ * if (!result.valid) {
+ *   console.error('Validierungsfehler:', result.errors);
+ * }
  */
 export function validateProject(data) {
     const errors = [];
@@ -76,10 +101,12 @@ export function validateProject(data) {
 }
 
 /**
- * Schnelle Boolesche Schema-Validierung für Ladeoperationen.
- * @param {any} data
- * @returns {boolean}
+ * Führt eine schnelle boolesche Schema-Validierung für Ladeoperationen durch.
+ *
+ * @param {unknown} data - Zu überprüfende Projektdaten.
+ * @returns {boolean} `true`, wenn valide, andernfalls `false`.
  */
 export function validateProjectSchema(data) {
     return validateProject(data).valid;
 }
+

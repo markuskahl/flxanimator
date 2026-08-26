@@ -1,29 +1,119 @@
+/**
+ * @file preview-canvas.js
+ * @description UI-Komponente für die Echtzeit-Animationsvorschau (Live Preview Canvas).
+ * Spielt die Frame-Sequenz der selektierten Animation mit konfigurierter Framerate (FPS) ab
+ * und unterstützt horizontales/vertikales Flippen (flipX/flipY) sowie interaktives Zoomen und Verschieben (Pan).
+ * @module components/preview-canvas
+ */
+
 import { Events } from '../core/events.js';
 import { calculateGridDimensions, getFrameCoords, clampZoom, calculatePanOnZoom } from '../core/grid-utils.js';
 
+/**
+ * Komponente zur Steuerung und Wiedergabe der Live-Animationsvorschau auf einem HTML5-Canvas.
+ * 
+ * @class
+ */
 export class PreviewCanvasComponent {
+    /**
+     * Erzeugt eine neue PreviewCanvasComponent.
+     * @param {import('../core/store.js').Store} store - Der zentrale Anwendungs-Store.
+     */
     constructor(store) {
+        /**
+         * @type {import('../core/store.js').Store}
+         */
         this.store = store;
 
+        /**
+         * Das Vorschau-Canvas DOM-Element (`#preview-canvas`).
+         * @type {HTMLCanvasElement|null}
+         */
         this.canvasPreview = document.getElementById('preview-canvas');
+
+        /**
+         * 2D-Rendering-Kontext des Vorschau-Canvas.
+         * @type {CanvasRenderingContext2D|null}
+         */
         this.ctxPreview = this.canvasPreview ? this.canvasPreview.getContext('2d') : null;
+
+        /**
+         * Scroll-Container der Vorschau (`#preview-scroll`).
+         * @type {HTMLElement|null}
+         */
         this.previewScroll = document.getElementById('preview-scroll');
+
+        /**
+         * CSS-Transform-Container für Zoom & Pan (`#preview-transform-container`).
+         * @type {HTMLElement|null}
+         */
         this.previewTransformContainer = document.getElementById('preview-transform-container');
+
+        /**
+         * DOM-Element des geladenen Spritesheet-Bildes (`#spritesheet-img`).
+         * @type {HTMLImageElement|null}
+         */
         this.imgSpritesheet = document.getElementById('spritesheet-img');
 
+        /**
+         * Aktueller Zoomfaktor der Vorschau (Standard 2 = 200%).
+         * @type {number}
+         */
         this.previewZoom = 2;
+
+        /**
+         * Horizontale Verschiebung (Pan Offset) in Pixeln.
+         * @type {number}
+         */
         this.previewPanX = 0;
+
+        /**
+         * Vertikale Verschiebung (Pan Offset) in Pixeln.
+         * @type {number}
+         */
         this.previewPanY = 0;
+
+        /**
+         * Statusflag für aktives Verschieben per Maus.
+         * @type {boolean}
+         */
         this.isPreviewPanning = false;
+
+        /**
+         * X-Startposition beim Beginn eines Pan-Vorgangs.
+         * @type {number}
+         */
         this.previewStartX = 0;
+
+        /**
+         * Y-Startposition beim Beginn eines Pan-Vorgangs.
+         * @type {number}
+         */
         this.previewStartY = 0;
 
+        /**
+         * Timer-Handle des setInterval-Loops für die Frame-Wiedergabe.
+         * @type {number|null}
+         */
         this.previewInterval = null;
+
+        /**
+         * Index des momentan in der Vorschau gerenderten Frames aus `anim.frames`.
+         * @type {number}
+         */
         this.currentPreviewFrame = 0;
 
         this.init();
     }
 
+    /**
+     * Initialisiert Event-Abonnements auf dem Store zur Aktualisierung der Animationsvorschau.
+     * @listens Events#ANIMATION_SELECTED
+     * @listens Events#ANIMATION_UPDATED
+     * @listens Events#FRAMES_CHANGED
+     * @listens Events#SPRITESHEET_LOADED
+     * @listens Events#SPRITESHEET_READY
+     */
     init() {
         if (!this.canvasPreview || !this.previewScroll) return;
 
@@ -36,6 +126,9 @@ export class PreviewCanvasComponent {
         this.setupPanAndZoom();
     }
 
+    /**
+     * Wendet die aktuellen Pan- und Zoom-Werte via CSS-Transform auf den Vorschau-Container an.
+     */
     updateTransform() {
         if (this.previewTransformContainer) {
             this.previewTransformContainer.style.transform = `translate(${this.previewPanX}px, ${this.previewPanY}px) scale(${this.previewZoom})`;
@@ -43,6 +136,9 @@ export class PreviewCanvasComponent {
         this.store.setPreviewTransform({ zoom: this.previewZoom, panX: this.previewPanX, panY: this.previewPanY });
     }
 
+    /**
+     * Konfiguriert Mausrad-Zoom und Drag-to-Pan für das Vorschaufenster.
+     */
     setupPanAndZoom() {
         this.previewScroll.addEventListener('wheel', (e) => {
             if (this.store.getSelectedAnimationIndex() < 0) return;
@@ -90,6 +186,10 @@ export class PreviewCanvasComponent {
         this.previewScroll.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
+    /**
+     * Startet oder aktualisiert den Frame-Wiedergabe-Timer für die momentan ausgewählte Animation.
+     * Berücksichtigt FPS, Looping, FlipX und FlipY.
+     */
     startPreview() {
         if (this.previewInterval) {
             clearInterval(this.previewInterval);
@@ -160,3 +260,4 @@ export class PreviewCanvasComponent {
         }
     }
 }
+

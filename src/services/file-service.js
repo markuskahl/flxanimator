@@ -1,14 +1,37 @@
 /**
- * Kapselt alle Electron IPC-Aufrufe über das `window.api` Bridge-Objekt.
+ * @file file-service.js
+ * @description Service-Schicht zur Kapselung aller Dateisystem- und IPC-Interaktionen.
+ * Kommuniziert über das im Preload-Skript exponierte `window.api`-Bridge-Objekt mit dem Electron Main-Prozess.
+ * @module services/file-service
+ */
+
+/**
+ * @typedef {Object} OpenProjectResult
+ * @property {import('../core/store.js').ProjectData} data - Geparste Projektdaten aus der JSON-Datei.
+ * @property {string} filePath - Absoluter Pfad der geöffneten Datei.
+ */
+
+/**
+ * Kapselt alle asynchronen Datei- und Dialog-Operationen zwischen dem Renderer-Frontend und dem Electron Main-Prozess.
+ * 
+ * @class
  */
 export class FileService {
+    /**
+     * Erzeugt eine neue Instanz des FileService und bindet die Electron-Preload-Bridge.
+     */
     constructor() {
+        /**
+         * Das globale IPC-Bridge-Objekt aus dem Preload-Skript (`preload.js`).
+         * @type {any}
+         */
         this.api = window.api || {};
     }
 
     /**
-     * Öffnet den nativen Dateidialog zur Auswahl eines Spritesheet-Bildes.
-     * @returns {Promise<string|null>}
+     * Öffnet den nativen System-Dateiauswahldialog zur Wahl eines Spritesheet-Bildes (PNG, JPG, WEBP).
+     *
+     * @returns {Promise<string|null>} Absoluter Dateipfad des gewählten Bildes oder `null`, falls abgebrochen.
      */
     async selectImage() {
         if (!this.api.selectImage) return null;
@@ -21,9 +44,11 @@ export class FileService {
     }
 
     /**
-     * Ermittelt die optimale Bild-URL (app-asset:// oder Fallback Base64).
-     * @param {string} imagePath
-     * @returns {Promise<string|null>}
+     * Löst den Dateipfad in eine renderfähige Bildquelle auf:
+     * Bevorzugt das performante, streamingfähige `app-asset://`-Protokoll und fällt bei Bedarf auf Base64 zurück.
+     *
+     * @param {string} imagePath - Absoluter Dateipfad auf der Festplatte.
+     * @returns {Promise<string|null>} Geladene URL oder Daten-URI, andernfalls `null`.
      */
     async resolveImageSource(imagePath) {
         if (!imagePath) return null;
@@ -47,10 +72,12 @@ export class FileService {
     }
 
     /**
-     * Speichert das Projekt als JSON.
-     * @param {object} projectData
-     * @param {string|null} existingPath
-     * @returns {Promise<string|null>} Neuer Pfad oder null
+     * Speichert das Projekt als formatierte JSON-Datei auf der Festplatte.
+     * Bereinigt zuvor temporäre Frontend-Felder (wie `imageSrc`).
+     *
+     * @param {import('../core/store.js').ProjectData} projectData - Die zu speichernden Projektdaten.
+     * @param {string|null} [existingPath=null] - Bestehender Pfad für schnelles Speichern (Strg+S) oder null für Dateidialog (Save As).
+     * @returns {Promise<string|null>} Der Pfad, unter dem die Datei gespeichert wurde, oder `null` bei Abbruch/Fehler.
      */
     async saveProject(projectData, existingPath = null) {
         if (!this.api.saveProject) return null;
@@ -79,8 +106,9 @@ export class FileService {
     }
 
     /**
-     * Öffnet den nativen Dateidialog zum Laden einer JSON-Projektdatei.
-     * @returns {Promise<{ data: object, filePath: string }|null>}
+     * Öffnet den nativen Dateidialog zum Auswählen und Laden einer bestehenden `.json`-Projektdatei.
+     *
+     * @returns {Promise<OpenProjectResult|null>} Geladene Projektdaten mit Dateipfad oder `null` bei Abbruch.
      */
     async openProject() {
         if (!this.api.openProject) return null;
@@ -93,8 +121,9 @@ export class FileService {
     }
 
     /**
-     * Ruft die Liste der zuletzt verwendeten Projekte ab.
-     * @returns {Promise<string[]>}
+     * Ruft die persistierte Liste der zuletzt verwendeten Projektdateien ab.
+     *
+     * @returns {Promise<string[]>} Array mit maximal 10 Dateipfaden kürzlich geöffneter Projekte.
      */
     async getRecentProjects() {
         if (!this.api.getRecentProjects) return [];
@@ -107,9 +136,10 @@ export class FileService {
     }
 
     /**
-     * Lädt ein Projekt aus der Recent-Projects-Liste.
-     * @param {string} filePath
-     * @returns {Promise<{ data: object, filePath: string }|null>}
+     * Lädt eine Projektdatei direkt anhand ihres absoluten Pfades aus der Liste der zuletzt geöffneten Projekte.
+     *
+     * @param {string} filePath - Absoluter Pfad der zu ladenden JSON-Projektdatei.
+     * @returns {Promise<OpenProjectResult|null>} Geladene Projektdaten oder `null` bei Fehler.
      */
     async openRecentProject(filePath) {
         if (!this.api.openRecentProject) return null;
@@ -122,15 +152,16 @@ export class FileService {
     }
 
     /**
-     * Schließt die App.
+     * Sendet eine IPC-Anforderung an das Hauptfenster, die Anwendung ordnungsgemäß zu schließen.
      */
     closeApp() {
         if (this.api.closeApp) this.api.closeApp();
     }
 
     /**
-     * Zeigt den Bestätigungsdialog für ungespeicherte Änderungen.
-     * @returns {Promise<number>} 0 = Save, 1 = Don't Save, 2 = Cancel
+     * Zeigt eine native Dialogbox an, wenn ungespeicherte Änderungen vorliegen.
+     *
+     * @returns {Promise<number>} Antwortcode: `0` = Speichern, `1` = Nicht speichern, `2` = Abbrechen.
      */
     async confirmClose() {
         if (!this.api.confirmClose) return 1;
@@ -138,15 +169,16 @@ export class FileService {
     }
 
     /**
-     * Beendet die App ohne weitere Prüfungen.
+     * Beendet die Anwendung sofort und ohne weitere Bestätigungsdialoge.
      */
     forceClose() {
         if (this.api.forceClose) this.api.forceClose();
     }
 
     /**
-     * Registriert einen Handler für das Schließen des Fensters.
-     * @param {Function} callback
+     * Registriert einen Event-Handler für das Schließen-Signal des Electron-Fensterrahmens.
+     *
+     * @param {() => void} callback - Callback-Funktion beim Schließen.
      */
     onRequestClose(callback) {
         if (this.api.onRequestClose) {
@@ -154,3 +186,4 @@ export class FileService {
         }
     }
 }
+

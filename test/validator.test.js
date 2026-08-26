@@ -1,3 +1,8 @@
+/**
+ * @file validator.test.js
+ * @description Unit-Tests für die Schema-Validierung von Projekten und Animationen in validator.js.
+ */
+
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateProject, validateProjectSchema } from '../src/core/validator.js';
@@ -84,3 +89,4 @@ describe('validator', () => {
         assert.ok(result.errors.some(e => e.includes('invalid frame index')));
     });
 });
+
