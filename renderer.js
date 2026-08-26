@@ -12,7 +12,8 @@ let project = {
         spacing: 0,
         margin: 0
     },
-    animations: [] // Format: { name: string, fps: number, loop: boolean, frames: number[] }
+    animations: [], // Format: { name: string, fps: number, loop: boolean, flipX: boolean, flipY: boolean, frames: number[] }
+    defaultAnimation: null
 };
 
 let selectedAnimationIndex = -1;
@@ -48,7 +49,6 @@ function clearDirty() {
 
 // --- DOM Elemente holen ---
 const modalNewProject = document.getElementById('modal-new-project');
-const modalExport = document.getElementById('modal-export');
 const modalNewAnim = document.getElementById('modal-new-anim');
 
 const editAnimControls = document.getElementById('edit-anim-controls');
@@ -61,7 +61,7 @@ const editAnimFlipY = document.getElementById('anim-flip-y');
 const btnNewProject = document.getElementById('btn-new-project');
 const btnOpenProject = document.getElementById('btn-open-project');
 const btnSaveProject = document.getElementById('btn-save-project');
-const btnExportHaxe = document.getElementById('btn-export-haxe');
+const btnSaveAsProject = document.getElementById('btn-save-as-project');
 
 const imgSpritesheet = document.getElementById('spritesheet-img');
 const canvasGrid = document.getElementById('grid-canvas');
@@ -69,6 +69,7 @@ const ctxGrid = canvasGrid.getContext('2d');
 const gridContainer = document.getElementById('grid-container');
 const workspace = document.querySelector('.workspace-scroll');
 
+const selectDefaultAnim = document.getElementById('default-anim-select');
 const animList = document.getElementById('animation-list');
 const canvasPreview = document.getElementById('preview-canvas');
 const ctxPreview = canvasPreview.getContext('2d');
@@ -146,9 +147,11 @@ async function updateRecentProjectsList() {
                     return;
                 }
                 project = response.data;
+                project.defaultAnimation = project.defaultAnimation || null;
                 currentFilePath = response.filePath;
                 await loadSpritesheet();
                 selectedAnimationIndex = -1;
+                updateDefaultAnimationSelect();
                 updateAnimationList();
                 drawGrid();
                 startPreview();
@@ -323,13 +326,13 @@ document.getElementById('btn-create-new').addEventListener('click', async () => 
     project.config.spacing = parseInt(document.getElementById('proj-spacing').value) || 0;
     project.config.margin = parseInt(document.getElementById('proj-margin').value) || 0;
     project.animations = [];
-    project.exportPath = null;
-    project.exportClassName = null;
+    project.defaultAnimation = null;
     selectedAnimationIndex = -1;
     currentFilePath = null;
 
     await loadSpritesheet();
     modalNewProject.classList.remove('active');
+    updateDefaultAnimationSelect();
     updateAnimationList();
     updateTimeline();
     showWorkspace();
@@ -613,6 +616,7 @@ document.getElementById('btn-confirm-new-anim').addEventListener('click', () => 
 
     // Automatisch die neu erstellte Animation auswählen
     selectedAnimationIndex = project.animations.length - 1;
+    updateDefaultAnimationSelect();
     updateAnimationList();
     drawGrid();
     startPreview();
@@ -624,13 +628,20 @@ document.getElementById('btn-confirm-new-anim').addEventListener('click', () => 
 editAnimName.addEventListener('input', (e) => {
     if (selectedAnimationIndex >= 0) {
         const anim = project.animations[selectedAnimationIndex];
-        anim.name = e.target.value;
+        const oldName = anim.name;
+        const newName = e.target.value;
+        anim.name = newName;
+        if (project.defaultAnimation === oldName) {
+            project.defaultAnimation = newName;
+        }
         // Aktualisiere nur das Text-Element in der Liste, ohne alles neu zu rendern
         const items = animList.querySelectorAll('.anim-item');
         if (items[selectedAnimationIndex]) {
             const span = items[selectedAnimationIndex].querySelector('span');
-            span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
+            const isDefault = project.defaultAnimation && project.defaultAnimation === anim.name;
+            span.innerHTML = `<strong>${anim.name}</strong>${isDefault ? ' <span class="badge-default">Default</span>' : ''} <small>(${anim.frames.length} frames)</small>`;
         }
+        updateDefaultAnimationSelect();
         markDirty();
     }
 });
@@ -663,6 +674,41 @@ editAnimFlipY.addEventListener('change', (e) => {
     }
 });
 
+function updateDefaultAnimationSelect() {
+    if (!selectDefaultAnim) return;
+    const currentVal = project.defaultAnimation || '';
+    selectDefaultAnim.innerHTML = '<option value="">-- None --</option>';
+
+    let found = false;
+    project.animations.forEach(anim => {
+        if (!anim.name) return;
+        const opt = document.createElement('option');
+        opt.value = anim.name;
+        opt.textContent = anim.name;
+        if (anim.name === currentVal) {
+            opt.selected = true;
+            found = true;
+        }
+        selectDefaultAnim.appendChild(opt);
+    });
+
+    if (!found && currentVal) {
+        project.defaultAnimation = null;
+        selectDefaultAnim.value = '';
+    } else {
+        selectDefaultAnim.value = project.defaultAnimation || '';
+    }
+}
+
+if (selectDefaultAnim) {
+    selectDefaultAnim.addEventListener('change', (e) => {
+        const val = e.target.value.trim();
+        project.defaultAnimation = val ? val : null;
+        updateAnimationList();
+        markDirty();
+    });
+}
+
 function updateEditControls() {
     if (selectedAnimationIndex >= 0 && selectedAnimationIndex < project.animations.length) {
         editAnimControls.style.display = 'block';
@@ -684,8 +730,9 @@ function updateAnimationList() {
         const li = document.createElement('li');
         li.className = `anim-item ${index === selectedAnimationIndex ? 'selected' : ''}`;
 
+        const isDefault = project.defaultAnimation && project.defaultAnimation === anim.name;
         const span = document.createElement('span');
-        span.innerHTML = `<strong>${anim.name}</strong> <small>(${anim.frames.length} frames)</small>`;
+        span.innerHTML = `<strong>${anim.name}</strong>${isDefault ? ' <span class="badge-default">Default</span>' : ''} <small>(${anim.frames.length} frames)</small>`;
 
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
@@ -695,12 +742,17 @@ function updateAnimationList() {
         // Löschen
         removeBtn.onclick = (e) => {
             e.stopPropagation();
+            const deletedAnim = project.animations[index];
             project.animations.splice(index, 1);
+            if (project.defaultAnimation && project.defaultAnimation === deletedAnim.name) {
+                project.defaultAnimation = null;
+            }
             if (selectedAnimationIndex === index) {
                 selectedAnimationIndex = -1;
             } else if (selectedAnimationIndex > index) {
                 selectedAnimationIndex--;
             }
+            updateDefaultAnimationSelect();
             updateAnimationList();
             drawGrid();
             startPreview();
@@ -934,7 +986,7 @@ function startPreview() {
 
 // --- Projekt Speichern / Laden (JSON) ---
 
-async function saveProjectData() {
+async function saveProjectData(forceSaveAs = false) {
     if (!project.imagePath) {
         showStatus("There is no project to save yet.", "error");
         return false;
@@ -945,27 +997,49 @@ async function saveProjectData() {
     const dataToSave = { ...project };
     delete dataToSave.imageBase64;
 
+    const pathToSend = forceSaveAs ? null : currentFilePath;
+
     // IPC Call
-    const savedPath = await window.api.saveProject(dataToSave, currentFilePath);
+    const savedPath = await window.api.saveProject(dataToSave, pathToSend);
     if (savedPath) {
         currentFilePath = savedPath;
         clearDirty();
-        const originalText = btnSaveProject.innerText;
-        btnSaveProject.innerText = 'Saved!';
+        const targetBtn = forceSaveAs ? btnSaveAsProject : btnSaveProject;
+        if (targetBtn) {
+            const originalText = targetBtn.innerText;
+            targetBtn.innerText = 'Saved!';
+            setTimeout(() => targetBtn.innerText = originalText, 1500);
+        }
         showStatus('Project saved successfully.', 'success');
-        setTimeout(() => btnSaveProject.innerText = originalText, 1500);
+        updateRecentProjectsList();
         return true;
     }
     return false;
 }
 
-btnSaveProject.addEventListener('click', saveProjectData);
+btnSaveProject.addEventListener('click', () => saveProjectData(false));
+if (btnSaveAsProject) {
+    btnSaveAsProject.addEventListener('click', () => saveProjectData(true));
+}
+
+// Tastaturkürzel: Strg+S (Speichern) und Strg+Umschalt+S (Speichern unter...)
+window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (e.shiftKey) {
+            saveProjectData(true);
+        } else {
+            saveProjectData(false);
+        }
+    }
+});
 
 function validateProjectSchema(data) {
     if (!data || typeof data !== 'object') return false;
     if (!data.config || typeof data.config !== 'object') return false;
     if (typeof data.config.width !== 'number' || typeof data.config.height !== 'number') return false;
     if (!Array.isArray(data.animations)) return false;
+    if (data.defaultAnimation !== undefined && data.defaultAnimation !== null && typeof data.defaultAnimation !== 'string') return false;
     return true;
 }
 
@@ -978,9 +1052,11 @@ async function openProjectHandler() {
             return;
         }
         project = response.data;
+        project.defaultAnimation = project.defaultAnimation || null;
         currentFilePath = response.filePath;
         await loadSpritesheet();
         selectedAnimationIndex = -1;
+        updateDefaultAnimationSelect();
         updateAnimationList();
         drawGrid();
         startPreview();
@@ -997,96 +1073,7 @@ if (btnStartOpenProject) {
     btnStartOpenProject.addEventListener('click', openProjectHandler);
 }
 
-// --- Haxe Code Export ---
 
-btnExportHaxe.addEventListener('click', () => {
-    if (project.animations.length === 0) {
-        showStatus("Please add at least one animation first.", "error");
-        return;
-    }
-
-    if (project.exportPath && project.exportClassName) {
-        performHaxeExport(project.exportClassName, project.exportPath, project.exportPackageName || '');
-    } else {
-        if (project.exportClassName) {
-            document.getElementById('export-classname').value = project.exportClassName;
-        }
-        if (project.exportPackageName !== undefined) {
-            document.getElementById('export-packagename').value = project.exportPackageName;
-        }
-        modalExport.classList.add('active');
-    }
-});
-
-document.getElementById('btn-export-settings').addEventListener('click', () => {
-    if (project.animations.length === 0) {
-        showStatus("Please add at least one animation first.", "error");
-        return;
-    }
-
-    if (project.exportClassName) {
-        document.getElementById('export-classname').value = project.exportClassName;
-    }
-    if (project.exportPackageName !== undefined) {
-        document.getElementById('export-packagename').value = project.exportPackageName;
-    }
-    modalExport.classList.add('active');
-});
-
-document.getElementById('btn-cancel-export').addEventListener('click', () => {
-    modalExport.classList.remove('active');
-});
-
-async function performHaxeExport(className, existingPath, packageName = '') {
-    // Wir erben explizit von FlxAnimationController (wie gefordert)
-    let haxeCode = packageName ? `package ${packageName};\n\n` : `package;\n\n`;
-    haxeCode += `import flixel.FlxSprite;\n`;
-    haxeCode += `import flixel.animation.FlxAnimationController;\n\n`;
-    haxeCode += `class ${className} extends FlxAnimationController {\n\n`;
-
-    haxeCode += `\tpublic function new(sprite:FlxSprite) {\n`;
-    haxeCode += `\t\tsuper(sprite);\n`;
-    haxeCode += `\t\tregisterAnimations();\n`;
-    haxeCode += `\t}\n\n`;
-
-    haxeCode += `\tprivate function registerAnimations():Void {\n`;
-
-    project.animations.forEach(anim => {
-        const framesStr = `[${anim.frames.join(', ')}]`;
-        // Da wir direkt innerhalb von FlxAnimationController sind, rufen wir this.add() auf.
-        // HaxeFlixel Syntax: add(Name, [FrameArray], Framerate, Looped, FlipX, FlipY)
-        haxeCode += `\t\tthis.add("${anim.name}", ${framesStr}, ${anim.fps}, ${anim.loop}, ${!!anim.flipX}, ${!!anim.flipY});\n`;
-    });
-
-    haxeCode += `\t}\n}\n`;
-
-    // IPC Call zum Speichern der .hx Datei
-    const response = await window.api.exportHaxe({ className, code: haxeCode, existingPath });
-    if (response && response.success) {
-        project.exportClassName = className;
-        project.exportPackageName = packageName;
-        project.exportPath = response.filePath;
-        markDirty(); // Speichert den exportPath mit im Projekt
-        modalExport.classList.remove('active');
-
-        // Auto-save the project so the export path and any changes are persisted immediately
-        const saved = await saveProjectData();
-        if (saved) {
-            showStatus('Haxe class exported & Project saved!', 'success');
-        } else {
-            showStatus('Haxe class exported, but project save failed.', 'error');
-        }
-    } else {
-        showStatus('Export cancelled or failed.', 'error');
-    }
-}
-
-// Generiert die Haxe-Klasse und öffnet den Speichern-Dialog
-document.getElementById('btn-confirm-export').addEventListener('click', () => {
-    const className = document.getElementById('export-classname').value.trim() || 'MyAnimationController';
-    const packageName = document.getElementById('export-packagename').value.trim();
-    performHaxeExport(className, null, packageName);
-});
 
 // ==========================================
 // PAN & ZOOM LOGIK

@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('api', {
     openProject: () => ipcRenderer.invoke('open-project'),
     getRecentProjects: () => ipcRenderer.invoke('get-recent-projects'),
     openRecentProject: (path) => ipcRenderer.invoke('open-recent-project', path),
-    exportHaxe: (data) => ipcRenderer.invoke('export-haxe', data),
     closeApp: () => ipcRenderer.send('close-app'),
     confirmClose: () => ipcRenderer.invoke('confirm-close'),
     forceClose: () => ipcRenderer.send('force-close'),

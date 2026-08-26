@@ -200,31 +200,7 @@ ipcMain.handle('open-recent-project', async (event, filePath) => {
     }
 });
 
-// 5. Haxe Klasse exportieren (.hx)
-ipcMain.handle('export-haxe', async (event, { className, code, existingPath }) => {
-    let filePath = existingPath;
-    
-    if (!filePath) {
-        const { canceled, filePath: newPath } = await dialog.showSaveDialog({
-            title: 'Export Haxe Class',
-            defaultPath: `${className}.hx`,
-            filters: [{ name: 'Haxe Class', extensions: ['hx'] }]
-        });
-        
-        if (canceled || !newPath) {
-            return { success: false };
-        }
-        filePath = newPath;
-    }
-    
-    try {
-        await fs.writeFile(filePath, code, 'utf-8');
-        return { success: true, filePath };
-    } catch (error) {
-        console.error("Fehler beim Exportieren:", error);
-        return { success: false };
-    }
-});
+
 
 // 6. Beenden erzwingen (aus Frontend, falls keine ungespeicherten Änderungen vorliegen)
 ipcMain.on('close-app', () => {
