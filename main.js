@@ -342,3 +342,12 @@ ipcMain.handle('confirm-close', async () => {
     return response;
 });
 
+/**
+ * 9. Anwendungsversion aus package.json abrufen.
+ * @listens ipcMain:get-app-version
+ * @returns {string} Version der Anwendung.
+ */
+ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+});
+

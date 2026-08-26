@@ -30,6 +30,12 @@ export class StatusBarComponent {
         this.statusBarEl = document.getElementById('status-bar');
 
         /**
+         * DOM-Element des Statustextes (`#status-message`).
+         * @type {HTMLElement|null}
+         */
+        this.statusMessageEl = document.getElementById('status-message') || this.statusBarEl;
+
+        /**
          * Timer-Handle für das automatische Zurücksetzen der Nachricht.
          * @type {number|null}
          */
@@ -60,7 +66,9 @@ export class StatusBarComponent {
     showMessage(message, type = 'info') {
         if (!this.statusBarEl) return;
 
-        this.statusBarEl.innerText = message;
+        if (this.statusMessageEl) {
+            this.statusMessageEl.innerText = message;
+        }
         this.statusBarEl.className = `status-bar ${type}`;
 
         if (this.statusTimeout) {
@@ -70,7 +78,9 @@ export class StatusBarComponent {
 
         if (type === 'success' || type === 'error') {
             this.statusTimeout = setTimeout(() => {
-                this.statusBarEl.innerText = 'Ready';
+                if (this.statusMessageEl) {
+                    this.statusMessageEl.innerText = 'Ready';
+                }
                 this.statusBarEl.className = 'status-bar';
             }, 4000);
         }

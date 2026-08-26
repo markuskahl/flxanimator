@@ -185,5 +185,20 @@ export class FileService {
             this.api.onRequestClose(callback);
         }
     }
+
+    /**
+     * Ruft die Versionsnummer der Anwendung ab.
+     *
+     * @returns {Promise<string>} Versionsnummer (z. B. "1.1.0").
+     */
+    async getAppVersion() {
+        if (!this.api.getAppVersion) return '1.1.0';
+        try {
+            return (await this.api.getAppVersion()) || '1.1.0';
+        } catch (err) {
+            console.error('Error fetching app version:', err);
+            return '1.1.0';
+        }
+    }
 }
 

@@ -89,6 +89,12 @@ contextBridge.exposeInMainWorld('api', {
      * Registriert einen Handler für das Fenster-Schließen-Event (z. B. Klick auf rotes X im Fenstertitel).
      * @param {Function} callback - Callback-Funktion.
      */
-    onRequestClose: (callback) => ipcRenderer.on('request-close', callback)
+    onRequestClose: (callback) => ipcRenderer.on('request-close', callback),
+
+    /**
+     * Ruft die Versionsnummer der Anwendung aus package.json ab.
+     * @returns {Promise<string>} Anwendungsversion.
+     */
+    getAppVersion: () => ipcRenderer.invoke('get-app-version')
 });
 

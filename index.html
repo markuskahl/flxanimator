@@ -16,7 +16,10 @@
 
 <body>
     <header id="app-header" class="app-header glass" style="display: none;">
-        <div class="logo">FlxAnimator</div>
+        <div class="logo-container">
+            <div class="logo">FlxAnimator</div>
+            <span id="header-version" class="version-badge">v1.1.0</span>
+        </div>
         <div class="header-actions">
             <button id="btn-new-project">New</button>
             <button id="btn-open-project">Open</button>
@@ -68,7 +71,10 @@
         <section class="workspace" style="flex-direction: column;">
             <div id="start-screen" class="start-screen glass-panel">
                 <div class="start-content">
-                    <h1>FlxAnimator</h1>
+                    <div class="start-title-wrapper">
+                        <h1>FlxAnimator</h1>
+                        <span id="start-version" class="version-badge">v1.1.0</span>
+                    </div>
                     <p>Create a new project or open an existing one.</p>
                     <div class="start-actions">
                         <button id="btn-start-new-project" class="primary pulse">New</button>
@@ -120,7 +126,8 @@
 
     <!-- Status Bar -->
     <footer class="status-bar" id="status-bar">
-        Ready
+        <span id="status-message">Ready</span>
+        <span id="status-version" class="status-version">v1.1.0</span>
     </footer>
 
     <!-- Modal: Neues Projekt -->

@@ -106,6 +106,29 @@ class App {
 
         this.setupKeyboardShortcuts();
         this.setupAppLifecycle();
+        this.updateAppVersion();
+    }
+
+    /**
+     * Ruft die Version der Anwendung asynchron ab und aktualisiert die UI-Elemente.
+     *
+     * @async
+     * @returns {Promise<void>}
+     */
+    async updateAppVersion() {
+        const version = await this.fileService.getAppVersion();
+        if (!version) return;
+
+        const formatted = version.startsWith('v') ? version : `v${version}`;
+
+        const startVersionEl = document.getElementById('start-version');
+        if (startVersionEl) startVersionEl.innerText = formatted;
+
+        const headerVersionEl = document.getElementById('header-version');
+        if (headerVersionEl) headerVersionEl.innerText = formatted;
+
+        const statusVersionEl = document.getElementById('status-version');
+        if (statusVersionEl) statusVersionEl.innerText = formatted;
     }
 
     /**
