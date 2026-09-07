@@ -291,6 +291,8 @@ export class Store extends EventTarget {
         }
 
         this.markDirty();
+        this.emit(Events.PROJECT_CONFIG_CHANGED, { config: { ...this.project.config } });
+        this.emit(Events.SPRITESHEET_LOADED, { imagePath: this.project.imagePath, imageSrc: this.project.imageSrc });
         this.emit(Events.ANIMATIONS_CHANGED, { project: this.project });
         this.emit(Events.ANIMATION_SELECTED, { index: this.selectedAnimationIndex, anim: this.getSelectedAnimation() });
         this.emit(Events.FRAMES_CHANGED, { anim: this.getSelectedAnimation() });
@@ -301,6 +303,8 @@ export class Store extends EventTarget {
 
     /**
      * Stellt die zuvor rückgängig gemachte Bearbeitungsaktion wieder her.
+     * @fires Events#PROJECT_CONFIG_CHANGED
+     * @fires Events#SPRITESHEET_LOADED
      * @fires Events#ANIMATIONS_CHANGED
      * @fires Events#ANIMATION_SELECTED
      * @fires Events#FRAMES_CHANGED
@@ -320,6 +324,8 @@ export class Store extends EventTarget {
         }
 
         this.markDirty();
+        this.emit(Events.PROJECT_CONFIG_CHANGED, { config: { ...this.project.config } });
+        this.emit(Events.SPRITESHEET_LOADED, { imagePath: this.project.imagePath, imageSrc: this.project.imageSrc });
         this.emit(Events.ANIMATIONS_CHANGED, { project: this.project });
         this.emit(Events.ANIMATION_SELECTED, { index: this.selectedAnimationIndex, anim: this.getSelectedAnimation() });
         this.emit(Events.FRAMES_CHANGED, { anim: this.getSelectedAnimation() });
@@ -369,6 +375,52 @@ export class Store extends EventTarget {
         this.project.imagePath = imagePath;
         this.project.imageSrc = imageSrc;
         this.emit(Events.SPRITESHEET_LOADED, { imagePath, imageSrc });
+    }
+
+    /**
+     * Aktualisiert die Spritesheet-Bildquelle zur Laufzeit mit Historien-Snapshot.
+     *
+     * @param {string} imagePath - Neuer absoluter Dateipfad des Bildes.
+     * @param {string} imageSrc - Aufgelöste Bild-URL.
+     * @fires Events#SPRITESHEET_LOADED
+     */
+    updateSpritesheet(imagePath, imageSrc) {
+        this.pushHistory();
+        this.project.imagePath = imagePath;
+        this.project.imageSrc = imageSrc;
+        this.markDirty();
+        this.emit(Events.SPRITESHEET_LOADED, { imagePath, imageSrc });
+        this.showStatus('Spritesheet updated.', 'info');
+    }
+
+    /**
+     * Aktualisiert die Raster-Konfiguration (Frame-Breite, -Höhe, Spacing, Margin) zur Laufzeit.
+     *
+     * @param {Partial<SpritesheetConfig>} patch - Neue Konfigurationsparameter.
+     * @param {boolean} [pushHistory=true] - Ob ein Undo-Schritt erzeugt werden soll.
+     * @fires Events#PROJECT_CONFIG_CHANGED
+     */
+    updateConfig(patch, pushHistory = true) {
+        if (pushHistory) {
+            this.pushHistory();
+        }
+
+        const cfg = this.project.config;
+        if (patch.width !== undefined) {
+            cfg.width = Math.max(1, parseInt(patch.width, 10) || 1);
+        }
+        if (patch.height !== undefined) {
+            cfg.height = Math.max(1, parseInt(patch.height, 10) || 1);
+        }
+        if (patch.spacing !== undefined) {
+            cfg.spacing = Math.max(0, parseInt(patch.spacing, 10) || 0);
+        }
+        if (patch.margin !== undefined) {
+            cfg.margin = Math.max(0, parseInt(patch.margin, 10) || 0);
+        }
+
+        this.markDirty();
+        this.emit(Events.PROJECT_CONFIG_CHANGED, { config: { ...this.project.config } });
     }
 
     /**

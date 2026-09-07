@@ -6,6 +6,7 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Store } from '../src/core/store.js';
+import { Events } from '../src/core/events.js';
 
 describe('Store', () => {
     let store;
@@ -106,6 +107,73 @@ describe('Store', () => {
         // Redo Frame 2
         store.redo();
         assert.deepEqual(store.getSelectedAnimation().frames, [0, 1, 2]);
+    });
+
+    it('updates grid configuration and emits PROJECT_CONFIG_CHANGED', () => {
+        let configEventDetail = null;
+        store.on(Events.PROJECT_CONFIG_CHANGED, (e) => {
+            configEventDetail = e.detail;
+        });
+
+        store.updateConfig({ width: 32, height: 48, spacing: 2, margin: 4 });
+
+        assert.equal(store.getIsDirty(), true);
+        assert.deepEqual(store.getProject().config, { width: 32, height: 48, spacing: 2, margin: 4 });
+        assert.deepEqual(configEventDetail, { config: { width: 32, height: 48, spacing: 2, margin: 4 } });
+
+        // Minimum clamping check
+        store.updateConfig({ width: -5, height: 0, spacing: -2, margin: -1 });
+        assert.equal(store.getProject().config.width, 1);
+        assert.equal(store.getProject().config.height, 1);
+        assert.equal(store.getProject().config.spacing, 0);
+        assert.equal(store.getProject().config.margin, 0);
+    });
+
+    it('updates spritesheet source and emits SPRITESHEET_LOADED', () => {
+        let eventDetail = null;
+        store.on(Events.SPRITESHEET_LOADED, (e) => {
+            eventDetail = e.detail;
+        });
+
+        store.updateSpritesheet('C:/assets/player.png', 'app-asset://C:/assets/player.png');
+
+        assert.equal(store.getIsDirty(), true);
+        assert.equal(store.getProject().imagePath, 'C:/assets/player.png');
+        assert.equal(store.getProject().imageSrc, 'app-asset://C:/assets/player.png');
+        assert.deepEqual(eventDetail, {
+            imagePath: 'C:/assets/player.png',
+            imageSrc: 'app-asset://C:/assets/player.png'
+        });
+    });
+
+    it('supports undo and redo for config and spritesheet changes', () => {
+        let configEvents = [];
+        store.on(Events.PROJECT_CONFIG_CHANGED, (e) => {
+            configEvents.push(e.detail.config);
+        });
+
+        store.updateConfig({ width: 32, height: 32 });
+        assert.deepEqual(store.getProject().config, { width: 32, height: 32, spacing: 0, margin: 0 });
+
+        store.updateSpritesheet('sheet2.png', 'data:image/png;base64,123');
+        assert.equal(store.getProject().imagePath, 'sheet2.png');
+
+        // Undo spritesheet
+        store.undo();
+        assert.equal(store.getProject().imagePath, null);
+        assert.equal(store.getProject().config.width, 32);
+
+        // Undo config
+        store.undo();
+        assert.equal(store.getProject().config.width, 16);
+
+        // Redo config
+        store.redo();
+        assert.equal(store.getProject().config.width, 32);
+
+        // Redo spritesheet
+        store.redo();
+        assert.equal(store.getProject().imagePath, 'sheet2.png');
     });
 });
 

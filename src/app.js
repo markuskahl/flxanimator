@@ -21,6 +21,7 @@ import { TimelineComponent } from './components/timeline.js';
 import { ResizerComponent } from './components/resizer.js';
 import { NewProjectModalComponent } from './components/modals/new-project-modal.js';
 import { NewAnimModalComponent } from './components/modals/new-anim-modal.js';
+import { ProjectSettingsModalComponent } from './components/modals/project-settings-modal.js';
 
 /**
  * Haupt-Anwendungsklasse (App Controller).
@@ -71,6 +72,8 @@ class App {
             onCreate: (projectData) => this.handleCreateProject(projectData)
         });
 
+        this.projectSettingsModal = new ProjectSettingsModalComponent(this.store, this.fileService);
+
         this.newAnimModal = new NewAnimModalComponent({
             onConfirm: (animData) => this.store.addAnimation(animData)
         });
@@ -79,6 +82,7 @@ class App {
             onNew: () => this.newProjectModal.open(),
             onOpen: () => this.handleOpenProject(),
             onSave: (forceSaveAs) => this.handleSaveProject(forceSaveAs),
+            onSettings: () => this.projectSettingsModal.open(),
             onClose: () => this.handleCloseApp()
         });
 
@@ -89,7 +93,8 @@ class App {
         });
 
         this.sidebar = new SidebarComponent(this.store, {
-            onAddAnimation: () => this.newAnimModal.open()
+            onAddAnimation: () => this.newAnimModal.open(),
+            onBrowseImage: () => this.handleBrowseSpritesheet()
         });
 
         this.gridCanvas = new GridCanvasComponent(this.store);
@@ -129,6 +134,25 @@ class App {
 
         const statusVersionEl = document.getElementById('status-version');
         if (statusVersionEl) statusVersionEl.innerText = formatted;
+    }
+
+    /**
+     * Öffnet den Dateiauswahldialog zum Ändern der Spritesheet-Bilddatei zur Laufzeit.
+     *
+     * @async
+     * @returns {Promise<void>}
+     */
+    async handleBrowseSpritesheet() {
+        const filePath = await this.fileService.selectImage();
+        if (!filePath) return;
+
+        const imageSrc = await this.fileService.resolveImageSource(filePath);
+        if (!imageSrc) {
+            this.store.showStatus('Failed to load spritesheet image.', 'error');
+            return;
+        }
+
+        this.store.updateSpritesheet(filePath, imageSrc);
     }
 
     /**

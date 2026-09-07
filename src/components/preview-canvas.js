@@ -122,6 +122,7 @@ export class PreviewCanvasComponent {
         this.store.on(Events.FRAMES_CHANGED, () => this.startPreview());
         this.store.on(Events.SPRITESHEET_LOADED, () => this.startPreview());
         this.store.on(Events.SPRITESHEET_READY, () => this.startPreview());
+        this.store.on(Events.PROJECT_CONFIG_CHANGED, () => this.startPreview());
 
         this.setupPanAndZoom();
     }

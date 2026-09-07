@@ -13,6 +13,7 @@ import { Events } from '../core/events.js';
  * @property {() => void} [onNew] - Callback bei "Neues Projekt".
  * @property {() => void} [onOpen] - Callback bei "Projekt öffnen".
  * @property {(forceSaveAs: boolean) => void} [onSave] - Callback bei "Speichern" (false) oder "Speichern unter" (true).
+ * @property {() => void} [onSettings] - Callback bei "Settings".
  * @property {() => void} [onClose] - Callback beim Schließen des Fensters.
  */
 
@@ -69,6 +70,12 @@ export class HeaderComponent {
         this.btnSaveAs = document.getElementById('btn-save-as-project');
 
         /**
+         * Button "Settings" (`#btn-project-settings`).
+         * @type {HTMLButtonElement|null}
+         */
+        this.btnSettings = document.getElementById('btn-project-settings');
+
+        /**
          * Button "Schließen" (`#btn-close-app`).
          * @type {HTMLButtonElement|null}
          */
@@ -110,6 +117,10 @@ export class HeaderComponent {
 
         if (this.btnSaveAs && this.callbacks.onSave) {
             this.btnSaveAs.addEventListener('click', () => this.callbacks.onSave(true));
+        }
+
+        if (this.btnSettings && this.callbacks.onSettings) {
+            this.btnSettings.addEventListener('click', () => this.callbacks.onSettings());
         }
 
         if (this.btnClose && this.callbacks.onClose) {

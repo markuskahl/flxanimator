@@ -18,7 +18,7 @@
             <div>
                 <h1>FlxAnimator</h1>
             </div>
-            <span class="version">v1.1.0</span>
+            <span class="version">v1.1.3</span>
         </div>
 
         <div class="sidebar-search">
@@ -71,6 +71,7 @@
                     <li class="nav-item"><a href="#comp-status-bar"><span>ℹ️</span> StatusBarComponent <span class="tag-pill tag-class">Class</span></a></li>
                     <li class="nav-item"><a href="#comp-start-screen"><span>🏠</span> StartScreenComponent <span class="tag-pill tag-class">Class</span></a></li>
                     <li class="nav-item"><a href="#comp-modals"><span>🪟</span> Modal-Komponenten <span class="tag-pill tag-class">Class</span></a></li>
+                    <li class="nav-item"><a href="#comp-settings-modal"><span>⚙️</span> ProjectSettingsModalComponent <span class="tag-pill tag-class">Class</span></a></li>
                 </ul>
             </div>
 
@@ -96,7 +97,7 @@
         <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value">17</div>
+                <div class="stat-value">18</div>
                 <div class="stat-label">Module & Komponenten</div>
             </div>
             <div class="stat-card">
@@ -104,7 +105,7 @@
                 <div class="stat-label">JSDoc Abdeckung</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">20 / 20</div>
+                <div class="stat-value">23 / 23</div>
                 <div class="stat-label">Unit Tests bestanden</div>
             </div>
             <div class="stat-card">
@@ -339,11 +340,33 @@
                 <div class="api-member">
                     <div class="api-member-header">
                         <span class="badge badge-method">Method</span>
+                        <code>updateConfig(patch, pushHistory = true)</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Aktualisiert die Gitterkonfiguration (<code>width</code>, <code>height</code>, <code>spacing</code>, <code>margin</code>) zur Laufzeit. Erzwingt Mindestwerte (Breite/Höhe &ge; 1, Spacing/Margin &ge; 0), markiert das Projekt als geändert und erzeugt optional einen Undo-Snapshot.</p>
+                        <p><strong>Feuert:</strong> <span class="type-pill">Events.PROJECT_CONFIG_CHANGED</span>, <span class="type-pill">Events.PROJECT_DIRTY_CHANGED</span></p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Method</span>
+                        <code>updateSpritesheet(imagePath, imageSrc)</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Wechselt die aktive Spritesheet-Bildquelle zur Laufzeit, erzeugt einen Historien-Snapshot für Undo/Redo und informiert alle Canvas- und Vorschau-Komponenten.</p>
+                        <p><strong>Feuert:</strong> <span class="type-pill">Events.SPRITESHEET_LOADED</span>, <span class="type-pill">Events.PROJECT_DIRTY_CHANGED</span></p>
+                    </div>
+                </div>
+
+                <div class="api-member">
+                    <div class="api-member-header">
+                        <span class="badge badge-method">Method</span>
                         <code>undo() / redo()</code>
                     </div>
                     <div class="api-member-body">
-                        <p>Macht die vorherige Bearbeitung rückgängig bzw. stellt sie wieder her. Hält maximal 50 Snapshots im Speicher.</p>
-                        <p><strong>Feuert:</strong> <span class="type-pill">Events.HISTORY_CHANGED</span>, <span class="type-pill">Events.ANIMATIONS_CHANGED</span>, <span class="type-pill">Events.FRAMES_CHANGED</span></p>
+                        <p>Macht die vorherige Bearbeitung rückgängig bzw. stellt sie wieder her. Hält maximal 50 Snapshots im Speicher und synchronisiert sowohl Animationen als auch Raster- und Bildzustände.</p>
+                        <p><strong>Feuert:</strong> <span class="type-pill">Events.HISTORY_CHANGED</span>, <span class="type-pill">Events.PROJECT_CONFIG_CHANGED</span>, <span class="type-pill">Events.SPRITESHEET_LOADED</span>, <span class="type-pill">Events.ANIMATIONS_CHANGED</span>, <span class="type-pill">Events.FRAMES_CHANGED</span></p>
                     </div>
                 </div>
             </div>
@@ -553,18 +576,28 @@
                         <code>SidebarComponent</code>
                     </div>
                     <div class="api-member-body">
-                        <p>Verwaltet die Liste aller Animationen und bindet Eingabefelder für Name, FPS, Loop, FlipX, FlipY und Default Animation direkt an Store-Mutationen an.</p>
+                        <p>Verwaltet die Animationsliste sowie den oberen klappbaren Bereich <strong>Spritesheet &amp; Grid</strong> mit Live-Eingaben für Frame-Breite, -Höhe, Spacing, Margin und Bildwechsel via Dateiauswahldialog. Zeigt zudem dynamische Gitter-Statistiken im Info-Badge an.</p>
                     </div>
                 </div>
 
                 <div class="api-member">
                     <div class="api-member-header">
                         <span class="badge badge-prop">Component</span>
-                        <code>HeaderComponent & StatusBarComponent</code>
+                        <code>HeaderComponent &amp; StatusBarComponent</code>
                     </div>
                     <div class="api-member-body">
-                        <p>Header: Zeigt Projektname und Dirty-Status <code>*</code> im Fenstertitel an; steuert Speichern/Öffnen.<br>
+                        <p>Header: Zeigt Projektname und Dirty-Status <code>*</code> im Fenstertitel an; steuert Neu, Öffnen, Speichern, Speichern unter und öffnet über <strong>Settings</strong> den Projekteinstellungs-Dialog.<br>
                         Status Bar: Zeigt kurzzeitige Erfolgs- und Fehlermeldungen mit automatischem 4-Sekunden-Reset an.</p>
+                    </div>
+                </div>
+
+                <div class="api-member" id="comp-settings-modal">
+                    <div class="api-member-header">
+                        <span class="badge badge-prop">Component</span>
+                        <code>ProjectSettingsModalComponent</code>
+                    </div>
+                    <div class="api-member-body">
+                        <p>Modaler Dialog (<code>#modal-project-settings</code>) zur Laufzeit-Konfiguration aller Spritesheet- und Raster-Parameter mit Plausibilitätsvalidierung und automatischer Asset-URL-Auflösung.</p>
                     </div>
                 </div>
             </div>
@@ -595,14 +628,14 @@
                         <tr>
                             <td><code>Store</code></td>
                             <td><code>test/store.test.js</code></td>
-                            <td>Initialisierung, Projektladen, Animation CRUD, Frame-Toggle, Undo/Redo Historie</td>
-                            <td><span class="badge badge-prop">PASS</span></td>
+                            <td>Initialisierung, Projektladen, Animation CRUD, Frame-Toggle, Raster-Konfiguration (updateConfig), Spritesheet-Wechsel (updateSpritesheet), Undo/Redo Historie</td>
+                            <td><span class="badge badge-prop">8 / 8 PASS</span></td>
                         </tr>
                         <tr>
                             <td><code>validator</code></td>
                             <td><code>test/validator.test.js</code></td>
                             <td>Schema-Gültigkeit, ungültige Konfigurationen, fehlerhafte Animationsdaten</td>
-                            <td><span class="badge badge-prop">PASS</span></td>
+                            <td><span class="badge badge-prop">4 / 4 PASS</span></td>
                         </tr>
                     </tbody>
                 </table>

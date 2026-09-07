@@ -7,10 +7,12 @@
  */
 
 import { Events } from '../core/events.js';
+import { calculateGridDimensions } from '../core/grid-utils.js';
 
 /**
  * @typedef {Object} SidebarCallbacks
  * @property {() => void} [onAddAnimation] - Callback beim Klick auf "Add Animation".
+ * @property {() => void} [onBrowseImage] - Callback beim Klick auf "Browse" für das Spritesheet-Bild.
  */
 
 /**
@@ -40,6 +42,19 @@ export class SidebarComponent {
          * @type {HTMLElement|null}
          */
         this.sidebarEl = document.getElementById('sidebar');
+
+        // --- Spritesheet & Grid Settings DOM Elements ---
+        this.headerSpritesheetSettings = document.getElementById('header-spritesheet-settings');
+        this.spritesheetSettingsBody = document.getElementById('spritesheet-settings-body');
+        this.toggleSpritesheetIcon = document.getElementById('toggle-spritesheet-icon');
+        this.badgeGridInfo = document.getElementById('badge-grid-info');
+        this.sidebarImgPath = document.getElementById('sidebar-img-path');
+        this.btnSidebarBrowseImg = document.getElementById('btn-sidebar-browse-img');
+        this.sidebarWidth = document.getElementById('sidebar-proj-width');
+        this.sidebarHeight = document.getElementById('sidebar-proj-height');
+        this.sidebarSpacing = document.getElementById('sidebar-proj-spacing');
+        this.sidebarMargin = document.getElementById('sidebar-proj-margin');
+        this.imgSpritesheet = document.getElementById('spritesheet-img');
 
         /**
          * Button "Add Animation" (`#btn-add-anim`).
@@ -101,6 +116,10 @@ export class SidebarComponent {
     /**
      * Initialisiert Event-Abonnements auf dem Store für Animations- und View-Updates.
      * @listens Events#VIEW_CHANGED
+     * @listens Events#PROJECT_LOADED
+     * @listens Events#PROJECT_CONFIG_CHANGED
+     * @listens Events#SPRITESHEET_LOADED
+     * @listens Events#SPRITESHEET_READY
      * @listens Events#ANIMATIONS_CHANGED
      * @listens Events#ANIMATION_SELECTED
      * @listens Events#ANIMATION_UPDATED
@@ -113,6 +132,11 @@ export class SidebarComponent {
                 this.sidebarEl.style.display = e.detail.view === 'workspace' ? 'flex' : 'none';
             }
         });
+
+        this.store.on(Events.PROJECT_LOADED, () => this.updateSpritesheetFields());
+        this.store.on(Events.PROJECT_CONFIG_CHANGED, () => this.updateSpritesheetFields());
+        this.store.on(Events.SPRITESHEET_LOADED, () => this.updateSpritesheetFields());
+        this.store.on(Events.SPRITESHEET_READY, () => this.updateGridBadge());
 
         this.store.on(Events.ANIMATIONS_CHANGED, () => {
             this.updateAnimationList();
@@ -142,6 +166,7 @@ export class SidebarComponent {
             this.btnAddAnim.addEventListener('click', () => this.callbacks.onAddAnimation());
         }
 
+        this.setupSpritesheetInputs();
         this.setupEditInputs();
     }
 
@@ -314,6 +339,91 @@ export class SidebarComponent {
             this.selectDefaultAnim.value = '';
         } else {
             this.selectDefaultAnim.value = project.defaultAnimation || '';
+        }
+    }
+
+    /**
+     * Richtet Event-Listener für die Spritesheet- und Raster-Eingabefelder in der Seitenleiste ein.
+     */
+    setupSpritesheetInputs() {
+        if (this.headerSpritesheetSettings && this.spritesheetSettingsBody) {
+            this.headerSpritesheetSettings.addEventListener('click', () => {
+                const isCollapsed = this.spritesheetSettingsBody.classList.toggle('collapsed');
+                if (this.toggleSpritesheetIcon) {
+                    this.toggleSpritesheetIcon.style.transform = isCollapsed ? 'rotate(-90deg)' : 'none';
+                }
+            });
+        }
+
+        if (this.btnSidebarBrowseImg && this.callbacks.onBrowseImage) {
+            this.btnSidebarBrowseImg.addEventListener('click', () => this.callbacks.onBrowseImage());
+        }
+
+        const handleConfigChange = (pushHistory) => {
+            const width = parseInt(this.sidebarWidth.value, 10);
+            const height = parseInt(this.sidebarHeight.value, 10);
+            const spacing = parseInt(this.sidebarSpacing.value, 10);
+            const margin = parseInt(this.sidebarMargin.value, 10);
+
+            if (isNaN(width) || width <= 0) return;
+            if (isNaN(height) || height <= 0) return;
+
+            this.store.updateConfig({
+                width,
+                height,
+                spacing: isNaN(spacing) ? 0 : spacing,
+                margin: isNaN(margin) ? 0 : margin
+            }, pushHistory);
+            this.updateGridBadge();
+        };
+
+        const configInputs = [this.sidebarWidth, this.sidebarHeight, this.sidebarSpacing, this.sidebarMargin];
+        configInputs.forEach(input => {
+            if (!input) return;
+            input.addEventListener('input', () => handleConfigChange(false));
+            input.addEventListener('change', () => handleConfigChange(true));
+        });
+    }
+
+    /**
+     * Synchronisiert die Formularfelder der Spritesheet-Einstellungen mit den Store-Daten.
+     */
+    updateSpritesheetFields() {
+        const project = this.store.getProject();
+        if (this.sidebarImgPath) {
+            this.sidebarImgPath.value = project.imagePath || '';
+            this.sidebarImgPath.title = project.imagePath || '';
+        }
+        if (this.sidebarWidth && document.activeElement !== this.sidebarWidth) {
+            this.sidebarWidth.value = project.config.width || 16;
+        }
+        if (this.sidebarHeight && document.activeElement !== this.sidebarHeight) {
+            this.sidebarHeight.value = project.config.height || 16;
+        }
+        if (this.sidebarSpacing && document.activeElement !== this.sidebarSpacing) {
+            this.sidebarSpacing.value = project.config.spacing ?? 0;
+        }
+        if (this.sidebarMargin && document.activeElement !== this.sidebarMargin) {
+            this.sidebarMargin.value = project.config.margin ?? 0;
+        }
+        this.updateGridBadge();
+    }
+
+    /**
+     * Aktualisiert die Badge-Anzeige mit den aktuellen Gitterabmessungen (Breite×Höhe, Spalten×Zeilen, Gesamtframes).
+     */
+    updateGridBadge() {
+        if (!this.badgeGridInfo) return;
+        const project = this.store.getProject();
+        const { width, height } = project.config;
+        const imgWidth = this.imgSpritesheet ? (this.imgSpritesheet.naturalWidth || this.imgSpritesheet.width) : 0;
+        const imgHeight = this.imgSpritesheet ? (this.imgSpritesheet.naturalHeight || this.imgSpritesheet.height) : 0;
+
+        if (imgWidth > 0 && imgHeight > 0) {
+            const { cols, rows, totalCells } = calculateGridDimensions(imgWidth, imgHeight, project.config);
+            this.badgeGridInfo.innerText = `${width}×${height} (${cols}×${rows} = ${totalCells})`;
+        } else {
+            this.badgeGridInfo.innerText = `${width}×${height}`;
         }
     }
 }

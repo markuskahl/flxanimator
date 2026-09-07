@@ -8,7 +8,8 @@
 
 - **Project Management:** Create, save (`Ctrl+S`), and save as (`Ctrl+Shift+S`) your animation projects directly to `.json`.
 - **Recent Projects:** Quickly resume your work from a list of recently opened projects on the start screen.
-- **Spritesheet Configuration:** Easily configure frame width, height, spacing, and margin for your spritesheets.
+- **Spritesheet Configuration:** Configure frame width, height, spacing, and margin for your spritesheets when creating a project.
+- **Runtime Configuration:** Adjust Frame Width, Frame Height, Spacing, Margin, or swap the Spritesheet image at runtime directly from the sidebar or via the **Settings** dialog with instant visual feedback and full Undo/Redo support.
 - **Timeline Editor:** Manage your animation frames with a fully featured timeline. Supports drag-and-drop from the spritesheet, duplication, and deletion of frames.
 - **Live Preview:** Watch your animation play in real-time as you pick frames. You can also pan and zoom in the preview window!
 - **Workspace Navigation:** Intuitive pan and zoom across your entire spritesheet using the mouse wheel and click-and-drag.
@@ -49,7 +50,7 @@ The compiled application will be located in the `dist` folder.
 ## Usage Guide
 
 1. On the start screen, click **New** and browse for your spritesheet image, or quickly open a **Recent Project**.
-2. Define the **Frame Width**, **Frame Height**, **Spacing**, and **Margin** matching your spritesheet.
+2. Define the **Frame Width**, **Frame Height**, **Spacing**, and **Margin** matching your spritesheet. You can also adjust any of these settings at any time during editing via the **Spritesheet & Grid** sidebar panel or the **Settings** button in the header.
 3. Click **Add Animation** in the sidebar to create a new animation state (e.g., "walk").
 4. Manage your frames using the timeline panel below the workspace. You can click on the grid to add frames, or drag-and-drop frames from the grid directly onto the timeline.
 5. Check the live preview on the right side. You can adjust FPS, loop, and flip settings in the sidebar on the fly, and choose a **Default Animation** from the dropdown.

@@ -145,6 +145,10 @@ export class GridCanvasComponent {
             this.drawGrid();
         });
 
+        this.store.on(Events.PROJECT_CONFIG_CHANGED, () => {
+            this.drawGrid();
+        });
+
         this.setupPanAndZoom();
         this.setupGridInteractions();
     }

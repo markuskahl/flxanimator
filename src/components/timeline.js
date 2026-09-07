@@ -73,6 +73,7 @@ export class TimelineComponent {
         this.store.on(Events.FRAMES_CHANGED, () => this.updateTimeline());
         this.store.on(Events.SPRITESHEET_LOADED, () => this.updateTimeline());
         this.store.on(Events.SPRITESHEET_READY, () => this.updateTimeline());
+        this.store.on(Events.PROJECT_CONFIG_CHANGED, () => this.updateTimeline());
 
         if (this.btnAddFrame) {
             this.btnAddFrame.addEventListener('click', () => {
