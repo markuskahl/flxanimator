@@ -139,7 +139,7 @@ export class TimelineComponent {
             const idxLabel = document.createElement('div');
             idxLabel.innerText = idx + 1;
             idxLabel.style.cssText = `
-                position: absolute; bottom: 4px; left: 4px;
+                position: absolute; top: 4px; left: 4px;
                 background: rgba(0, 0, 0, 0.8); color: #fff;
                 font-weight: bold; font-size: 0.8rem;
                 padding: 2px 6px; border-radius: 4px;
@@ -152,14 +152,15 @@ export class TimelineComponent {
             actionsEl.className = 'frame-actions';
             actionsEl.style.cssText = `
                 position: absolute; bottom: 0; left: 0; right: 0;
-                background: rgba(0,0,0,0.7); display: none;
-                justify-content: space-around; padding: 2px 0;
+                background: rgba(0,0,0,0.75); display: none;
+                justify-content: space-around; align-items: center; padding: 3px 0;
+                z-index: 10;
             `;
 
             const btnDup = document.createElement('button');
             btnDup.innerHTML = '⧉';
             btnDup.title = 'Duplicate Frame';
-            btnDup.style.cssText = 'background: transparent; border: none; color: #fff; padding: 2px 5px; font-size: 0.8rem; cursor: pointer; min-width: 0;';
+            btnDup.style.cssText = 'background: transparent; border: none; color: #fff; padding: 2px 5px; font-size: 0.85rem; cursor: pointer; min-width: 0;';
             btnDup.onclick = (e) => {
                 e.stopPropagation();
                 this.store.duplicateFrame(idx);
@@ -178,8 +179,8 @@ export class TimelineComponent {
             actionsEl.appendChild(btnDel);
             frameEl.appendChild(actionsEl);
 
-            frameEl.onmouseover = () => { actionsEl.style.display = 'flex'; };
-            frameEl.onmouseout = () => { actionsEl.style.display = 'none'; };
+            frameEl.onmouseenter = () => { actionsEl.style.display = 'flex'; };
+            frameEl.onmouseleave = () => { actionsEl.style.display = 'none'; };
 
             this.timelineFrames.appendChild(frameEl);
         });

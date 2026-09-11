@@ -1,6 +1,6 @@
 {
   "name": "FlxAnimator",
-  "version": "1.1.3",
+  "version": "1.1.6",
   "description": "Spritesheet Animation Tool für HaxeFlixel",
   "main": "main.js",
   "scripts": {

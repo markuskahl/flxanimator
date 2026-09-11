@@ -7,7 +7,6 @@
  */
 
 import { Events } from '../core/events.js';
-import { calculateGridDimensions } from '../core/grid-utils.js';
 
 /**
  * @typedef {Object} SidebarCallbacks
@@ -47,14 +46,12 @@ export class SidebarComponent {
         this.headerSpritesheetSettings = document.getElementById('header-spritesheet-settings');
         this.spritesheetSettingsBody = document.getElementById('spritesheet-settings-body');
         this.toggleSpritesheetIcon = document.getElementById('toggle-spritesheet-icon');
-        this.badgeGridInfo = document.getElementById('badge-grid-info');
         this.sidebarImgPath = document.getElementById('sidebar-img-path');
         this.btnSidebarBrowseImg = document.getElementById('btn-sidebar-browse-img');
         this.sidebarWidth = document.getElementById('sidebar-proj-width');
         this.sidebarHeight = document.getElementById('sidebar-proj-height');
         this.sidebarSpacing = document.getElementById('sidebar-proj-spacing');
         this.sidebarMargin = document.getElementById('sidebar-proj-margin');
-        this.imgSpritesheet = document.getElementById('spritesheet-img');
 
         /**
          * Button "Add Animation" (`#btn-add-anim`).
@@ -119,7 +116,6 @@ export class SidebarComponent {
      * @listens Events#PROJECT_LOADED
      * @listens Events#PROJECT_CONFIG_CHANGED
      * @listens Events#SPRITESHEET_LOADED
-     * @listens Events#SPRITESHEET_READY
      * @listens Events#ANIMATIONS_CHANGED
      * @listens Events#ANIMATION_SELECTED
      * @listens Events#ANIMATION_UPDATED
@@ -136,7 +132,6 @@ export class SidebarComponent {
         this.store.on(Events.PROJECT_LOADED, () => this.updateSpritesheetFields());
         this.store.on(Events.PROJECT_CONFIG_CHANGED, () => this.updateSpritesheetFields());
         this.store.on(Events.SPRITESHEET_LOADED, () => this.updateSpritesheetFields());
-        this.store.on(Events.SPRITESHEET_READY, () => this.updateGridBadge());
 
         this.store.on(Events.ANIMATIONS_CHANGED, () => {
             this.updateAnimationList();
@@ -352,6 +347,7 @@ export class SidebarComponent {
                 if (this.toggleSpritesheetIcon) {
                     this.toggleSpritesheetIcon.style.transform = isCollapsed ? 'rotate(-90deg)' : 'none';
                 }
+                this.headerSpritesheetSettings.style.marginBottom = isCollapsed ? '0' : '0.8rem';
             });
         }
 
@@ -374,7 +370,6 @@ export class SidebarComponent {
                 spacing: isNaN(spacing) ? 0 : spacing,
                 margin: isNaN(margin) ? 0 : margin
             }, pushHistory);
-            this.updateGridBadge();
         };
 
         const configInputs = [this.sidebarWidth, this.sidebarHeight, this.sidebarSpacing, this.sidebarMargin];
@@ -405,25 +400,6 @@ export class SidebarComponent {
         }
         if (this.sidebarMargin && document.activeElement !== this.sidebarMargin) {
             this.sidebarMargin.value = project.config.margin ?? 0;
-        }
-        this.updateGridBadge();
-    }
-
-    /**
-     * Aktualisiert die Badge-Anzeige mit den aktuellen Gitterabmessungen (Breite×Höhe, Spalten×Zeilen, Gesamtframes).
-     */
-    updateGridBadge() {
-        if (!this.badgeGridInfo) return;
-        const project = this.store.getProject();
-        const { width, height } = project.config;
-        const imgWidth = this.imgSpritesheet ? (this.imgSpritesheet.naturalWidth || this.imgSpritesheet.width) : 0;
-        const imgHeight = this.imgSpritesheet ? (this.imgSpritesheet.naturalHeight || this.imgSpritesheet.height) : 0;
-
-        if (imgWidth > 0 && imgHeight > 0) {
-            const { cols, rows, totalCells } = calculateGridDimensions(imgWidth, imgHeight, project.config);
-            this.badgeGridInfo.innerText = `${width}×${height} (${cols}×${rows} = ${totalCells})`;
-        } else {
-            this.badgeGridInfo.innerText = `${width}×${height}`;
         }
     }
 }

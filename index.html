@@ -40,14 +40,11 @@
     <main class="app-main">
         <aside id="sidebar" class="sidebar glass-panel" style="display: none;">
             <section class="panel panel-collapsible" id="panel-spritesheet-settings" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-                <div class="panel-header" id="header-spritesheet-settings" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <div class="panel-header" id="header-spritesheet-settings" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
                     <h2 style="margin-bottom: 0; user-select: none;">Spritesheet & Grid</h2>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span id="badge-grid-info" class="badge-info" style="font-size: 0.7rem; color: var(--accent-color); background: rgba(0, 230, 118, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0,230,118,0.2);">16×16</span>
-                        <span id="toggle-spritesheet-icon" style="font-size: 0.75rem; color: var(--text-muted); transition: transform 0.2s;">▼</span>
-                    </div>
+                    <span id="toggle-spritesheet-icon" style="font-size: 0.75rem; color: var(--text-muted); transition: transform 0.2s; transform: rotate(-90deg);">▼</span>
                 </div>
-                <div id="spritesheet-settings-body">
+                <div id="spritesheet-settings-body" class="collapsed">
                     <div class="form-group" style="margin-bottom: 0.8rem;">
                         <label style="font-size: 0.8rem;">Spritesheet Image:</label>
                         <div class="file-input-group">
